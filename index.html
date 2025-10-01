@@ -114,7 +114,11 @@
                     </div>
 
                     <div class="container-box p-6">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-4 border-b pb-2">วิเคราะห์การใช้จ่าย</h2>
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4 border-b pb-2">วิเคราะห์การใช้จ่าย <span class="text-sm font-normal text-blue-500">(FinTrack AI)</span></h2>
+                        <div id="aiAnalysis" class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-gray-700">
+                             กำลังประมวลผลการวิเคราะห์...
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-1">รายละเอียดรายจ่ายตามหมวดหมู่</h3>
                         <div id="categoryAnalysis" class="space-y-4">
                             <p class="text-gray-500">กำลังโหลด...</p>
                         </div>
@@ -144,8 +148,8 @@
                                 </div>
 
                                 <div>
-                                    <label for="date" class="block text-sm font-medium text-gray-700">วันที่และเวลา</label>
-                                    <input type="datetime-local" id="date" name="date" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                                    <label for="date" class="block text-sm font-medium text-gray-700">วันที่</label>
+                                    <input type="date" id="date" name="date" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                                 </div>
 
                                 <div>
@@ -198,11 +202,7 @@
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                     <span>ล้างข้อมูลทั้งหมด</span>
                                 </button>
-                                <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="importCSV(event)">
-                                <button onclick="document.getElementById('csvFileInput').click()" class="text-sm text-gray-600 hover:text-blue-600 transition duration-150 flex items-center space-x-1">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                    <span>นำเข้า CSV</span>
-                                </button>
+
                                 <button onclick="exportCSV()" class="text-sm text-gray-600 hover:text-blue-600 transition duration-150 flex items-center space-x-1">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                                     <span>ส่งออก CSV</span>
@@ -214,7 +214,7 @@
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่และเวลา</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รายละเอียด</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">หมวดหมู่</th>
                                         <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวนเงิน</th>
@@ -277,28 +277,6 @@
         const formatCurrency = (num) => {
             return parseFloat(num).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         };
-        
-        /**
-         * Formats YYYY-MM-DDTHH:mm string to DD/MM/YYYY HH:mm น. (พ.ศ.)
-         */
-        const formatDateTime = (isoString) => {
-            if (!isoString || isoString.length < 10) return isoString;
-            try {
-                // Split for YYYY-MM-DD and HH:mm
-                const parts = isoString.split('T'); 
-                const dateParts = parts[0].split('-'); 
-                
-                // Fallback for date-only format (old data)
-                if (dateParts.length < 3) return isoString; 
-
-                const buddhistYear = parseInt(dateParts[0]) + 543; 
-                const date = `${dateParts[2]}/${dateParts[1]}/${buddhistYear}`;
-                const time = parts[1] ? parts[1] : '00:00';
-                return `${date} ${time} น.`;
-            } catch (e) {
-                return isoString;
-            }
-        };
 
         /**
          * Initializes the application by loading data from Local Storage.
@@ -311,11 +289,8 @@
             // 2. โหลดข้อมูล
             loadTransactions();
             
-            // 3. ตั้งค่าวันที่และเวลาเริ่มต้นในฟอร์ม (แก้ไขจากเดิมที่ใช้ date เป็น datetime-local)
-            const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            const datetimeLocalString = now.toISOString().slice(0, 16);
-            document.getElementById('date').value = datetimeLocalString;
+            // 3. ตั้งค่าวันที่เริ่มต้นในฟอร์ม
+            document.getElementById('date').value = new Date().toISOString().split('T')[0];
         }
 
         /**
@@ -345,12 +320,11 @@
                 } else {
                     transactions = [];
                 }
-                // Sort by timestamp (newest first)
+                // Sort by timestamp (newest first) or date (if timestamp is missing)
                 transactions.sort((a, b) => {
                     const timeA = a.timestamp || a.date;
                     const timeB = b.timestamp || b.date;
-                    // เรียงจากใหม่สุดไปเก่าสุด
-                    return timeB.localeCompare(timeA); 
+                    return timeB.localeCompare(timeA); // Simple string comparison for sort
                 });
 
                 renderTransactions();
@@ -376,8 +350,7 @@
 
             const form = event.target;
             const type = form.type.value;
-            // date ตอนนี้เป็น datetime-local string
-            const date = form.date.value; 
+            const date = form.date.value;
             const amount = parseFloat(form.amount.value);
             const category = form.category.value;
             const description = form.description.value.trim();
@@ -390,7 +363,7 @@
             const newTransaction = {
                 id: Date.now().toString() + Math.random().toString(36).substring(2, 9), 
                 type,
-                date, // YYYY-MM-DDTHH:mm
+                date,
                 amount,
                 category,
                 description,
@@ -402,11 +375,7 @@
             loadTransactions(); 
 
             form.reset();
-            // Reset date to current datetime
-            const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            document.getElementById('date').value = now.toISOString().slice(0, 16);
-            
+            form.date.value = new Date().toISOString().split('T')[0];
             form.category.selectedIndex = 0;
             
             switchTab('transactions'); 
@@ -468,7 +437,7 @@
 
                 return `
                     <tr class="hover:bg-gray-50 transition duration-100">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatDateTime(t.date)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${t.date}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${t.description}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-xs font-medium text-gray-500">${t.category}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-right ${amountClass}">
@@ -599,6 +568,84 @@
                 }
             });
         }
+        
+        /**
+         * Generates an "AI" analysis based on current month's spending vs. income.
+         */
+        function generateAIAnalysis(totalIncome, totalExpense, categoryTotals) {
+            const now = new Date();
+            const currentMonthYear = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+            const currentDay = now.getDate();
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+            
+            // 1. Filter transactions for the current month
+            const currentMonthTransactions = transactions.filter(t => t.date.startsWith(currentMonthYear));
+            let currentMonthIncome = 0;
+            let currentMonthExpense = 0;
+
+            currentMonthTransactions.forEach(t => {
+                if (t.type === 'income') {
+                    currentMonthIncome += t.amount;
+                } else if (t.type === 'expense') {
+                    currentMonthExpense += t.amount;
+                }
+            });
+
+            // 2. Calculate remaining budget/deficit
+            const netBalance = currentMonthIncome - currentMonthExpense;
+            const remainingExpensePercentage = currentMonthIncome > 0 ? (currentMonthExpense / currentMonthIncome) * 100 : 0;
+            const dailyExpenseRate = currentMonthExpense / currentDay;
+            const remainingDays = daysInMonth - currentDay;
+            const projectedTotalExpense = dailyExpenseRate * daysInMonth;
+            const projectedNetBalance = currentMonthIncome - projectedTotalExpense;
+
+            let message = `<p class="font-bold text-blue-800">สรุปภาพรวมการเงินประจำเดือน (ถึงวันที่ ${currentDay}/${currentMonthYear.split('-')[1]})</p>`;
+            
+            if (currentMonthIncome === 0 && currentMonthExpense === 0) {
+                 message += `<p>ยังไม่มีรายการรายรับหรือรายจ่ายในเดือนนี้</p>`;
+            } else {
+                message += `<ul class="list-disc ml-5 space-y-1 mt-2">`;
+                message += `<li><span class="font-medium">รายรับเดือนนี้:</span> ${formatCurrency(currentMonthIncome)} ฿</li>`;
+                message += `<li><span class="font-medium">รายจ่ายเดือนนี้:</span> ${formatCurrency(currentMonthExpense)} ฿</li>`;
+
+                // **วิเคราะห์การใช้จ่ายจากรายรับ**
+                if (currentMonthIncome > 0) {
+                    message += `<li><span class="font-medium">สัดส่วนรายจ่าย:</span> ใช้จ่ายไป **${remainingExpensePercentage.toFixed(1)}%** ของรายรับทั้งหมดในเดือนนี้</li>`;
+                }
+
+                // **วิเคราะห์ยอดคงเหลือและแนวโน้ม**
+                if (netBalance >= 0) {
+                     message += `<li><span class="font-medium text-emerald-600">สถานะปัจจุบัน:</span> เหลือเงินใช้ **${formatCurrency(netBalance)} ฿**</li>`;
+                } else {
+                     message += `<li><span class="font-medium text-red-600">สถานะปัจจุบัน:</span> มียอดติดลบ **${formatCurrency(Math.abs(netBalance))} ฿** (รายจ่ายสูงกว่ารายรับ)</li>`;
+                }
+                
+                // **การคาดการณ์**
+                if (currentMonthIncome > 0 && dailyExpenseRate > 0) {
+                    message += `<li><span class="font-medium">คาดการณ์สิ้นเดือน:</span> หากใช้จ่ายด้วยอัตราเฉลี่ย ${formatCurrency(dailyExpenseRate)} ฿/วัน คุณจะเหลือเงินประมาณ **${formatCurrency(projectedNetBalance)} ฿** (อ้างอิงจากรายรับปัจจุบัน)</li>`;
+                } else if (currentMonthIncome === 0 && dailyExpenseRate > 0) {
+                    message += `<li><span class="font-medium">คำเตือน:</span> มีรายจ่ายเฉลี่ย ${formatCurrency(dailyExpenseRate)} ฿/วัน แต่ยังไม่มีรายรับ.</li>`;
+                }
+
+                // **คำแนะนำ**
+                if (remainingExpensePercentage >= 70 && currentMonthIncome > 0) {
+                    message += `<li class="text-red-700 font-bold">⚠️ ข้อควรระวัง: สัดส่วนการใช้จ่ายสูงถึง ${remainingExpensePercentage.toFixed(1)}% ควรควบคุมรายจ่ายในช่วงที่เหลือของเดือน</li>`;
+                } else if (remainingExpensePercentage < 30 && currentMonthIncome > 0) {
+                    message += `<li class="text-emerald-700 font-bold">🎉 ยอดเยี่ยม! สัดส่วนการใช้จ่ายต่ำเพียง ${remainingExpensePercentage.toFixed(1)}% สามารถเก็บออมหรือลงทุนได้มากขึ้น</li>`;
+                }
+                
+                // **หมวดหมู่สูงสุด**
+                const sortedCategories = Object.entries(categoryTotals).sort(([, a], [, b]) => b - a);
+                if (sortedCategories.length > 0) {
+                    const topCategory = sortedCategories[0];
+                    message += `<li><span class="font-medium">หมวดหมู่ใช้จ่ายสูงสุด:</span> **${topCategory[0]}** (${formatCurrency(topCategory[1])} ฿)</li>`;
+                }
+
+                message += `</ul>`;
+            }
+
+            return message;
+        }
 
 
         /**
@@ -629,7 +676,10 @@
             // 2. Render Charts
             renderCharts(categoryTotals, totalExpense);
 
-            // 3. Render Category Analysis 
+            // 3. Render AI Analysis (NEW)
+            document.getElementById('aiAnalysis').innerHTML = generateAIAnalysis(totalIncome, totalExpense, categoryTotals);
+
+            // 4. Render Category Analysis 
             const analysisEl = document.getElementById('categoryAnalysis');
             const totalExpenseForAnalysis = totalExpense;
 
@@ -659,117 +709,6 @@
         }
 
         // =======================================================================
-        // IMPORT FUNCTION (CSV)
-        // =======================================================================
-        
-        /**
-         * Imports transactions from a CSV file (matching export format).
-         * Assumes headers: 'วันที่/เวลา', 'รายรับ/รายจ่าย', 'รายการ', 'รายละเอียดรายการ', 'ราคา', 'ยอดคงเหลือ'
-         */
-        window.importCSV = function(event) {
-            const file = event.target.files[0];
-            if (!file) {
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const csv = e.target.result;
-                    // ลบ BOM (\ufeff) ถ้ามี
-                    const cleanedCsv = csv.startsWith('\ufeff') ? csv.substring(1) : csv;
-                    const lines = cleanedCsv.split('\n').filter(line => line.trim() !== '');
-
-                    if (lines.length <= 1) {
-                        alertCustom('นำเข้าไม่สำเร็จ', 'ไฟล์ CSV ไม่มีข้อมูลหรือมีรูปแบบไม่ถูกต้อง');
-                        return;
-                    }
-                    
-                    // ใช้ regex ที่ซับซ้อนขึ้นเพื่อจัดการ CSV ที่มี Double Quotes
-                    const parseCSVLine = (line) => {
-                        const results = [];
-                        let inQuotes = false;
-                        let field = '';
-                        for (let i = 0; i < line.length; i++) {
-                            const char = line[i];
-
-                            if (char === '"') {
-                                // ตรวจสอบ escape quote: ""
-                                if (inQuotes && line[i + 1] === '"') {
-                                    field += '"';
-                                    i++; // ข้ามตัวอักษร " ถัดไป
-                                } else {
-                                    inQuotes = !inQuotes;
-                                }
-                            } else if (char === ',' && !inQuotes) {
-                                results.push(field.trim());
-                                field = '';
-                            } else {
-                                field += char;
-                            }
-                        }
-                        results.push(field.trim());
-                        return results.map(r => r.startsWith('"') && r.endsWith('"') ? r.slice(1, -1) : r);
-                    };
-
-                    const newTransactions = [];
-                    const headers = parseCSVLine(lines[0]);
-                    const expectedHeaders = ['วันที่/เวลา', 'รายรับ/รายจ่าย', 'รายการ', 'รายละเอียดรายการ', 'ราคา', 'ยอดคงเหลือ'];
-
-                    // ตรวจสอบความถูกต้องของ Header (อย่างน้อยต้องมี 5 คอลัมน์ที่จำเป็น)
-                    if (headers.slice(0, 5).join(',') !== expectedHeaders.slice(0, 5).join(',')) {
-                        alertCustom('รูปแบบไม่ถูกต้อง', 'รูปแบบหัวตาราง CSV ไม่ตรงกับที่คาดไว้ (วันที่/เวลา, รายรับ/รายจ่าย, รายการ, รายละเอียดรายการ, ราคา, ยอดคงเหลือ)');
-                        return;
-                    }
-                    
-                    for (let i = 1; i < lines.length; i++) {
-                        const values = parseCSVLine(lines[i]);
-                        
-                        if (values.length < 5) continue; // ข้ามแถวที่ข้อมูลไม่ครบ
-
-                        const typeStr = values[1];
-                        const amountStr = values[4];
-
-                        const type = typeStr === 'รายรับ' ? 'income' : 'expense';
-                        const amount = parseFloat(amountStr);
-                        
-                        // ตรวจสอบข้อมูลพื้นฐาน
-                        if (isNaN(amount) || amount <= 0) continue; 
-
-                        newTransactions.push({
-                            id: Date.now().toString() + i + Math.random().toString(36).substring(2, 5), // สร้าง ID ใหม่
-                            type: type,
-                            date: values[0].replace(/"/g, ''), // วันที่/เวลา
-                            category: values[2].replace(/"/g, ''), // รายการ
-                            description: values[3].replace(/"/g, ''), // รายละเอียดรายการ
-                            amount: amount,
-                            timestamp: new Date().toISOString(),
-                        });
-                    }
-
-                    if (newTransactions.length > 0) {
-                        // เพิ่มรายการใหม่เข้าไปในรายการเดิม (ไม่ล้างข้อมูลเดิม)
-                        transactions.push(...newTransactions);
-                        saveTransactions();
-                        loadTransactions(); 
-                        alertCustom('นำเข้าสำเร็จ', `นำเข้ารายการธุรกรรมใหม่สำเร็จ ${newTransactions.length} รายการ`);
-                    } else {
-                        alertCustom('นำเข้าไม่สำเร็จ', 'ไม่พบรายการธุรกรรมที่ถูกต้องในไฟล์');
-                    }
-                    
-                } catch (error) {
-                    console.error("CSV Import Error:", error);
-                    alertCustom('เกิดข้อผิดพลาด', 'ไม่สามารถประมวลผลไฟล์ CSV ได้ โปรดตรวจสอบรูปแบบไฟล์');
-                } finally {
-                    // ล้างค่าใน input file เพื่อให้สามารถนำเข้าไฟล์เดิมซ้ำได้
-                    event.target.value = '';
-                }
-            };
-            reader.readAsText(file, 'UTF-8');
-        }
-
-
-        // =======================================================================
         // EXPORT FUNCTION (CSV)
         // =======================================================================
 
@@ -782,49 +721,33 @@
                 return;
             }
 
-            // 1. กำหนดหัวข้อคอลัมน์ตามที่ผู้ใช้ต้องการ
-            const headers = ['วันที่/เวลา', 'รายรับ/รายจ่าย', 'รายการ', 'รายละเอียดรายการ', 'ราคา', 'ยอดคงเหลือ'];
+            const headers = ['ID', 'Date', 'Type', 'Category', 'Description', 'Amount', 'Timestamp'];
 
-            // 2. เตรียมข้อมูลเรียงลำดับจากเก่าไปใหม่เพื่อคำนวณยอดคงเหลือสะสม
-            // ใช้ .sort() เพื่อเรียงลำดับเวลา/วันที่แบบขึ้น (เก่าไปใหม่)
-            const chronologicalTxs = [...transactions].sort((a, b) => a.date.localeCompare(b.date));
+            // Map data to CSV format
+            const csvData = transactions.map(t => [
+                t.id,
+                t.date,
+                t.type === 'income' ? 'รายรับ' : 'รายจ่าย',
+                t.category,
+                // Sanitize description for CSV
+                `"${t.description.replace(/"/g, '""').replace(/\r?\n|\r/g, ' ')}"`,
+                t.amount,
+                t.timestamp || ''
+            ]);
 
-            let runningBalance = 0;
-            
-            // 3. คำนวณยอดคงเหลือและจัดรูปแบบข้อมูลสำหรับ CSV
-            const csvData = chronologicalTxs.map(t => {
-                const amountValue = t.amount;
-                // กำหนดเครื่องหมายสำหรับคำนวณยอดคงเหลือ
-                const effectiveAmount = t.type === 'income' ? amountValue : -amountValue;
-                
-                runningBalance += effectiveAmount;
-
-                return [
-                    // 1. Date/Time (ISO format for re-import and accuracy)
-                    // ใช้การครอบด้วย Double Quotes เพื่อให้มั่นใจว่า CSV อ่านค่า Date/Time ได้ถูกต้อง
-                    `"${t.date}"`, 
-                    // 2. Type (รายรับ/รายจ่าย)
-                    t.type === 'income' ? 'รายรับ' : 'รายจ่าย', 
-                    // 3. Category (รายการ)
-                    `"${t.category}"`, 
-                    // 4. Description (รายละเอียดรายการ) - Sanitize และครอบด้วย Double Quotes
-                    `"${t.description.replace(/"/g, '""').replace(/\r?\n|\r/g, ' ')}"`, 
-                    // 5. Price/Amount (ราคา) - ใช้ค่าบวก
-                    amountValue.toFixed(2), 
-                    // 6. Running Balance (ยอดคงเหลือ) - หลังจากรายการนี้
-                    runningBalance.toFixed(2), 
-                ];
-            });
-
-            // 4. รวมหัวข้อและข้อมูล
+            // Combine headers and data
             const csvArray = [headers.join(','), ...csvData.map(row => row.join(','))];
             let csvString = csvArray.join('\n');
             
-            // 5. Export setup (เพิ่ม BOM สำหรับรองรับภาษาไทยใน Excel)
+            // FIX: Prepend UTF-8 BOM (\ufeff) to ensure Excel recognizes Thai characters correctly.
             const bom = "\ufeff";
             csvString = bom + csvString;
+
+
+            // Create Blob and download link
             const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
+
             if (link.download !== undefined) {
                 const url = URL.createObjectURL(blob);
                 link.setAttribute("href", url);
