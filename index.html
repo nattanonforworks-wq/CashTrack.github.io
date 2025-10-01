@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>โปรแกรมจัดการการเงินส่วนบุคคล - Personal Finance Manager</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, addDoc, onSnapshot, collection, query, setDoc, deleteDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables for Firebase (MUST be defined globally)
+        window.initializeApp = initializeApp;
+        window.getAuth = getAuth;
+        window.signInAnonymously = signInAnonymously;
+        window.signInWithCustomToken = signInWithCustomToken;
+        window.onAuthStateChanged = onAuthStateChanged;
+        window.getFirestore = getFirestore;
+        window.addDoc = addDoc;
+        window.onSnapshot = onSnapshot;
+        window.collection = collection;
+        window.query = query;
+        window.doc = doc;
+        window.setDoc = setDoc;
+        window.deleteDoc = deleteDoc;
+        window.serverTimestamp = serverTimestamp;
+        window.setLogLevel = setLogLevel;
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7f9;
+        }
+        .tab-button.active {
+            border-bottom: 3px solid #10b981; /* Emerald 500 */
+            color: #10b981;
+            font-weight: 600;
+        }
+        .income-color { color: #10b981; }
+        .expense-color { color: #ef4444; }
+        .balance-color { color: #3b82f6; }
+        .data-card {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 sm:p-6 md:p-10">
+
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">💰 โปรแกรมจัดการเงิน: รายรับ-รายจ่าย</h1>
+
+        <!-- User ID Display (Mandatory for multi-user apps) -->
+        <div id="authStatus" class="mb-4 p-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-600">
+            กำลังเชื่อมต่อ...
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="flex border-b border-gray-300 mb-6 bg-white rounded-t-lg">
+            <button id="tabDashboardBtn" onclick="switchTab('dashboard')" class="tab-button active flex-1 py-3 px-4 text-center text-gray-600 hover:text-emerald-500 transition duration-150">
+                แดชบอร์ด &amp; วิเคราะห์
+            </button>
+            <button id="tabTransactionBtn" onclick="switchTab('transactions')" class="tab-button flex-1 py-3 px-4 text-center text-gray-600 hover:text-emerald-500 transition duration-150">
+                บันทึกรายการ
+            </button>
+        </div>
+
+        <!-- 1. Dashboard & Analysis View -->
+        <div id="dashboardView" class="tab-content">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <!-- Total Income Card -->
+                <div class="bg-white p-5 rounded-xl data-card border-l-4 border-emerald-500">
+                    <p class="text-sm text-gray-500">รวมรายรับ</p>
+                    <p id="totalIncome" class="text-2xl font-bold income-color mt-1">0.00 ฿</p>
+                </div>
+                <!-- Total Expense Card -->
+                <div class="bg-white p-5 rounded-xl data-card border-l-4 border-red-500">
+                    <p class="text-sm text-gray-500">รวมรายจ่าย</p>
+                    <p id="totalExpense" class="text-2xl font-bold expense-color mt-1">0.00 ฿</p>
+                </div>
+                <!-- Net Balance Card -->
+                <div class="bg-white p-5 rounded-xl data-card border-l-4 border-blue-500">
+                    <p class="text-sm text-gray-500">คงเหลือสุทธิ</p>
+                    <p id="netBalance" class="text-2xl font-bold balance-color mt-1">0.00 ฿</p>
+                </div>
+            </div>
+
+            <!-- Budgeting and Category Analysis with Charts -->
+            <div class="bg-white p-6 rounded-xl data-card mb-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">การวิเคราะห์ค่าใช้จ่ายตามหมวดหมู่</h2>
+                
+                <!-- Chart Containers -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div class="p-4 border rounded-xl">
+                        <h3 class="font-semibold text-gray-600 mb-2 border-b pb-2">สัดส่วนรายจ่าย (Pie Chart)</h3>
+                        <canvas id="expensePieChart"></canvas>
+                        <p id="noPieData" class="text-center text-gray-500 hidden pt-4">ไม่มีข้อมูลรายจ่ายที่ต้องวิเคราะห์</p>
+                    </div>
+                    <div class="p-4 border rounded-xl">
+                        <h3 class="font-semibold text-gray-600 mb-2 border-b pb-2">รายจ่ายสูงสุด 5 อันดับ (Bar Chart)</h3>
+                        <canvas id="expenseBarChart"></canvas>
+                        <p id="noBarData" class="text-center text-gray-500 hidden pt-4">ไม่มีข้อมูลรายจ่ายที่ต้องวิเคราะห์</p>
+                    </div>
+                </div>
+
+                <!-- Existing Category List -->
+                <h3 class="text-lg font-semibold text-gray-700 mt-4 mb-3 border-t pt-4">รายละเอียดตามรายการ</h3>
+                <div id="categoryAnalysis" class="space-y-3">
+                    <p class="text-gray-500">ไม่มีข้อมูลรายจ่ายที่ต้องวิเคราะห์</p>
+                </div>
+            </div>
+
+            <!-- Data Export -->
+            <div class="bg-white p-6 rounded-xl data-card mb-6 flex justify-between items-center">
+                <h2 class="text-xl font-semibold text-gray-700">ส่งออกข้อมูล</h2>
+                <button onclick="exportCSV()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md">
+                    <svg class="inline w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    ดาวน์โหลดเป็น CSV (สำหรับ Excel/Sheets)
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. Transaction Management View -->
+        <div id="transactionsView" class="tab-content hidden">
+            <!-- Add Transaction Form -->
+            <div class="bg-white p-6 rounded-xl data-card mb-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">เพิ่มรายการใหม่</h2>
+                <form id="transactionForm" onsubmit="addTransaction(event)">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Type -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">ประเภท</label>
+                            <select id="type" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                                <option value="income">รายรับ (Income)</option>
+                                <option value="expense">รายจ่าย (Expense)</option>
+                            </select>
+                        </div>
+                        <!-- Date -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">วันที่</label>
+                            <input type="date" id="date" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500" value="${new Date().toISOString().split('T')[0]}">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <!-- Amount -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">จำนวนเงิน (บาท)</label>
+                            <input type="number" id="amount" step="0.01" min="0.01" required placeholder="เช่น 15000" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                        </div>
+                        <!-- Category -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">หมวดหมู่</label>
+                            <select id="category" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                                <option value="" disabled selected>เลือกหมวดหมู่...</option>
+                                <optgroup label="รายรับ (Income)">
+                                    <option value="Salary">เงินเดือน</option>
+                                    <option value="Investment">การลงทุน/ดอกเบี้ย</option>
+                                    <option value="OtherIncome">รายรับอื่นๆ</option>
+                                </optgroup>
+                                <optgroup label="รายจ่าย (Expense)">
+                                    <option value="Food">อาหารและเครื่องดื่ม</option>
+                                    <option value="Housing">ที่อยู่อาศัย (ค่าเช่า/ผ่อนบ้าน)</option>
+                                    <option value="Transportation">เดินทาง/ยานพาหนะ</option>
+                                    <option value="Utilities">ค่าสาธารณูปโภค (น้ำ, ไฟ, โทรศัพท์)</option>
+                                    <option value="Entertainment">บันเทิง/ท่องเที่ยว</option>
+                                    <option value="Shopping">ช้อปปิ้ง/ส่วนตัว</option>
+                                    <option value="Health">สุขภาพ/ประกัน</option>
+                                    <option value="OtherExpense">รายจ่ายอื่นๆ</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">รายละเอียด (สั้นๆ)</label>
+                        <input type="text" id="description" required placeholder="เช่น เงินเดือนเดือนล่าสุด, ค่ากาแฟ" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                    </div>
+
+                    <button type="submit" class="w-full mt-6 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 rounded-xl transition duration-200 shadow-lg">
+                        บันทึกรายการ
+                    </button>
+                </form>
+            </div>
+
+            <!-- Transaction List -->
+            <div class="bg-white p-6 rounded-xl data-card">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">รายการทั้งหมด</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รายละเอียด</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">หมวดหมู่</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวน (฿)</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionList" class="bg-white divide-y divide-gray-200">
+                            <!-- Transactions will be inserted here by JavaScript -->
+                            <tr><td colspan="5" class="p-4 text-center text-gray-500">ยังไม่มีรายการบันทึก</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal/Message Box (for alerts/confirmations) -->
+    <div id="messageBox" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full">
+            <h3 id="messageTitle" class="text-lg font-bold mb-3 text-gray-800">ยืนยันการลบ</h3>
+            <p id="messageBody" class="text-gray-600 mb-4">คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?</p>
+            <div class="flex justify-end space-x-3">
+                <button id="messageCancel" class="py-2 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition">ยกเลิก</button>
+                <button id="messageConfirm" class="py-2 px-4 bg-red-500 hover:bg-red-600 rounded-lg text-white transition">ยืนยัน</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // =======================================================================
+        // FIREBASE & UTILITY SETUP
+        // =======================================================================
+
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-finance-app';
+        let db, auth, userId = null;
+        let transactions = [];
+        let authReady = false;
+
+        // Global Chart Instances and Colors
+        let pieChartInstance = null;
+        let barChartInstance = null;
+        const CHART_COLORS = [
+            '#ef4444', // Red 500
+            '#f97316', // Orange 500
+            '#f59e0b', // Amber 500
+            '#10b981', // Emerald 500
+            '#3b82f6', // Blue 500
+            '#8b5cf6', // Violet 500
+            '#ec4899', // Pink 500
+            '#6b7280', // Gray 500
+            '#14b8a6', // Teal 500
+            '#a855f7', // Purple 500
+        ];
+
+        /**
+         * Converts number to formatted currency string (e.g., 10000 -> 10,000.00).
+         * @param {number} num
+         * @returns {string}
+         */
+        const formatCurrency = (num) => {
+            return parseFloat(num).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+
+        /**
+         * Initializes Firebase and authenticates the user.
+         */
+        async function initFirebase() {
+            try {
+                // setLogLevel('Debug'); // Uncomment for detailed console logs
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                const authStatusEl = document.getElementById('authStatus');
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        authReady = true;
+                        authStatusEl.innerHTML = `สถานะ: <span class="font-medium text-green-600">เชื่อมต่อแล้ว</span> | ID ผู้ใช้: <span class="font-mono text-xs">${userId}</span>`;
+                        // Start listening to transactions once authenticated
+                        loadTransactions();
+                    } else {
+                        // Attempt to sign in with custom token or anonymously
+                        if (typeof __initial_auth_token !== 'undefined') {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error("Firebase Initialization Error:", error);
+                document.getElementById('authStatus').innerHTML = `<span class="font-medium text-red-600">ข้อผิดพลาดในการเชื่อมต่อ Firebase</span>: ${error.message}`;
+            }
+        }
+
+        // =======================================================================
+        // DATA MANAGEMENT (CRUD)
+        // =======================================================================
+
+        /**
+         * Gets the Firestore collection reference for user's private data.
+         */
+        function getTransactionCollectionRef() {
+            if (!db || !userId) return null;
+            // Private data path: /artifacts/{appId}/users/{userId}/financial_transactions
+            return collection(db, 'artifacts', appId, 'users', userId, 'financial_transactions');
+        }
+
+        /**
+         * Listens to real-time updates from Firestore.
+         */
+        function loadTransactions() {
+            const ref = getTransactionCollectionRef();
+            if (!ref) return;
+
+            onSnapshot(query(ref), (snapshot) => {
+                const fetchedTransactions = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    // Ensure amount is treated as a number
+                    data.amount = parseFloat(data.amount);
+                    fetchedTransactions.push({ id: doc.id, ...data });
+                });
+
+                // Sort by timestamp (newest first). Use JS sorting as orderBy() is often restricted.
+                transactions = fetchedTransactions.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+
+                renderTransactions();
+                renderDashboard();
+                console.log("Transactions updated:", transactions.length);
+
+            }, (error) => {
+                console.error("Error fetching transactions:", error);
+            });
+        }
+
+        /**
+         * Adds a new transaction to Firestore.
+         * @param {Event} event
+         */
+        window.addTransaction = async function(event) {
+            event.preventDefault();
+
+            if (!authReady) {
+                alertCustom('ข้อผิดพลาด', 'โปรดรอการเชื่อมต่อฐานข้อมูลให้เสร็จสมบูรณ์ก่อนบันทึกรายการ');
+                return;
+            }
+
+            const form = event.target;
+            const type = form.type.value;
+            const date = form.date.value;
+            const amount = parseFloat(form.amount.value);
+            const category = form.category.value;
+            const description = form.description.value.trim();
+
+            if (isNaN(amount) || amount <= 0 || !category) {
+                alertCustom('ข้อมูลไม่ถูกต้อง', 'โปรดกรอกจำนวนเงินและหมวดหมู่ให้ถูกต้อง');
+                return;
+            }
+
+            const newTransaction = {
+                type,
+                date,
+                amount,
+                category,
+                description,
+                timestamp: serverTimestamp(), // Use Firestore timestamp for creation time
+            };
+
+            try {
+                await addDoc(getTransactionCollectionRef(), newTransaction);
+                form.reset();
+                form.date.value = new Date().toISOString().split('T')[0]; // Reset date to today
+                // Reset category selection
+                form.category.selectedIndex = 0;
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                alertCustom('บันทึกไม่สำเร็จ', 'เกิดข้อผิดพลาดในการบันทึกรายการ โปรดลองใหม่อีกครั้ง');
+            }
+        }
+
+        /**
+         * Deletes a transaction from Firestore.
+         * @param {string} id
+         */
+        window.deleteTransaction = function(id) {
+            confirmCustom('ยืนยันการลบ', 'คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้อย่างถาวร?', async () => {
+                try {
+                    const docRef = doc(getTransactionCollectionRef(), id);
+                    await deleteDoc(docRef);
+                    console.log("Document successfully deleted!");
+                } catch (e) {
+                    console.error("Error deleting document: ", e);
+                    alertCustom('ลบไม่สำเร็จ', 'เกิดข้อผิดพลาดในการลบรายการ โปรดลองใหม่อีกครั้ง');
+                }
+            });
+        }
+
+        // =======================================================================
+        // RENDERING & UI LOGIC
+        // =======================================================================
+
+        /**
+         * Renders the transaction list table.
+         */
+        function renderTransactions() {
+            const listEl = document.getElementById('transactionList');
+            if (!listEl) return;
+
+            if (transactions.length === 0) {
+                listEl.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">ยังไม่มีรายการบันทึก</td></tr>';
+                return;
+            }
+
+            listEl.innerHTML = transactions.map(t => {
+                const amountClass = t.type === 'income' ? 'income-color font-semibold' : 'expense-color font-semibold';
+                const sign = t.type === 'income' ? '+' : '-';
+
+                return `
+                    <tr class="hover:bg-gray-50 transition duration-100">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${t.date}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${t.description}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-xs font-medium text-gray-500">${t.category}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right ${amountClass}">
+                            ${sign} ${formatCurrency(t.amount)}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button onclick="deleteTransaction('${t.id}')" class="text-red-600 hover:text-red-900 transition duration-150 p-1 rounded-full hover:bg-red-100">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        /**
+         * Renders the expense category charts using Chart.js.
+         * @param {Object} categoryTotals - Object with category names as keys and total amount as values.
+         * @param {number} totalExpense - Total expense amount.
+         */
+        function renderCharts(categoryTotals, totalExpense) {
+            // 1. Prepare data
+            const sortedCategories = Object.entries(categoryTotals).sort(([, a], [, b]) => b - a);
+
+            const labels = sortedCategories.map(([category]) => category);
+            const data = sortedCategories.map(([, amount]) => amount);
+            const colors = labels.map((_, index) => CHART_COLORS[index % CHART_COLORS.length]);
+
+            const hasData = sortedCategories.length > 0;
+            document.getElementById('noPieData').classList.toggle('hidden', hasData);
+            document.getElementById('noBarData').classList.toggle('hidden', hasData);
+
+            // 2. Destroy existing chart instances if they exist
+            if (pieChartInstance) {
+                pieChartInstance.destroy();
+                pieChartInstance = null; // Clear reference
+            }
+            if (barChartInstance) {
+                barChartInstance.destroy();
+                barChartInstance = null; // Clear reference
+            }
+
+            if (!hasData) return; // Stop if no expense data to plot
+
+            // --- Pie Chart (All Expenses) ---
+            const pieCtx = document.getElementById('expensePieChart').getContext('2d');
+            pieChartInstance = new Chart(pieCtx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'ยอดรวมรายจ่าย (฿)',
+                        data: data,
+                        backgroundColor: colors,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    family: 'Inter', // Apply Thai font family
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const percentage = totalExpense > 0 ? ((value / totalExpense) * 100).toFixed(1) : 0;
+                                    return `${label}: ${formatCurrency(value)} ฿ (${percentage}%)`;
+                                }
+                            },
+                            bodyFont: { family: 'Inter' }, // Apply Thai font family
+                        }
+                    }
+                }
+            });
+
+            // --- Bar Chart (Top 5 Expenses) ---
+            const top5Categories = sortedCategories.slice(0, 5);
+            const barLabels = top5Categories.map(([category]) => category);
+            const barData = top5Categories.map(([, amount]) => amount);
+            const barColors = barLabels.map((_, index) => CHART_COLORS[index % CHART_COLORS.length]);
+
+            const barCtx = document.getElementById('expenseBarChart').getContext('2d');
+            barChartInstance = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: barLabels,
+                    datasets: [{
+                        label: 'ยอดรวมรายจ่าย (฿)',
+                        data: barData,
+                        backgroundColor: barColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    indexAxis: 'y', // Make it a horizontal bar chart for better label readability
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'จำนวนเงิน (฿)',
+                                font: { family: 'Inter' }
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return formatCurrency(value);
+                                },
+                                font: { family: 'Inter' }
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                font: { family: 'Inter' }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { bodyFont: { family: 'Inter' } }
+                    }
+                }
+            });
+        }
+
+
+        /**
+         * Calculates and renders the dashboard summary and category analysis.
+         */
+        function renderDashboard() {
+            let totalIncome = 0;
+            let totalExpense = 0;
+            const categoryTotals = {};
+
+            transactions.forEach(t => {
+                if (t.type === 'income') {
+                    totalIncome += t.amount;
+                } else if (t.type === 'expense') {
+                    totalExpense += t.amount;
+                    categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
+                }
+            });
+
+            const netBalance = totalIncome - totalExpense;
+
+            // 1. Update summary cards
+            document.getElementById('totalIncome').textContent = formatCurrency(totalIncome) + ' ฿';
+            document.getElementById('totalExpense').textContent = formatCurrency(totalExpense) + ' ฿';
+            document.getElementById('netBalance').textContent = formatCurrency(netBalance) + ' ฿';
+            document.getElementById('netBalance').className = `text-2xl font-bold mt-1 ${netBalance >= 0 ? 'balance-color' : 'expense-color'}`;
+            
+            // 2. Render Charts
+            renderCharts(categoryTotals, totalExpense);
+
+            // 3. Render Category Analysis (Simple Bar Chart using CSS/Tailwind - kept for detailed list view)
+            const analysisEl = document.getElementById('categoryAnalysis');
+            const totalExpenseForAnalysis = totalExpense;
+
+            const sortedCategories = Object.entries(categoryTotals).sort(([, a], [, b]) => b - a);
+
+            if (sortedCategories.length === 0) {
+                analysisEl.innerHTML = '<p class="text-gray-500">ไม่มีข้อมูลรายจ่ายที่ต้องวิเคราะห์</p>';
+                return;
+            }
+
+            analysisEl.innerHTML = sortedCategories.map(([category, amount]) => {
+                const percentage = totalExpenseForAnalysis > 0 ? ((amount / totalExpenseForAnalysis) * 100).toFixed(1) : 0;
+                const widthStyle = `width: ${percentage}%`;
+
+                return `
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-sm">
+                            <span class="font-medium text-gray-700">${category}</span>
+                            <span class="text-red-500 font-semibold">${formatCurrency(amount)} ฿ (${percentage}%)</span>
+                        </div>
+                        <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div class="h-full bg-red-400 rounded-full" style="${widthStyle}"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // =======================================================================
+        // EXPORT FUNCTION (Kept the UTF-8 BOM fix)
+        // =======================================================================
+
+        /**
+         * Exports all transaction data to a CSV file.
+         */
+        window.exportCSV = function() {
+            if (transactions.length === 0) {
+                alertCustom('ไม่พบข้อมูล', 'ไม่มีรายการบันทึกที่จะส่งออก');
+                return;
+            }
+
+            const headers = ['ID', 'Date', 'Type', 'Category', 'Description', 'Amount', 'Timestamp_Seconds'];
+
+            // Map data to CSV format
+            const csvData = transactions.map(t => [
+                t.id,
+                t.date,
+                t.type === 'income' ? 'รายรับ' : 'รายจ่าย',
+                t.category,
+                // Sanitize description for CSV (replace quotes and remove new lines)
+                `"${t.description.replace(/"/g, '""').replace(/\r?\n|\r/g, ' ')}"`,
+                t.amount,
+                t.timestamp?.seconds || ''
+            ]);
+
+            // Combine headers and data
+            const csvArray = [headers.join(','), ...csvData.map(row => row.join(','))];
+            let csvString = csvArray.join('\n');
+            
+            // FIX: Prepend UTF-8 BOM (\ufeff) to the string to ensure Excel recognizes Thai characters correctly.
+            const bom = "\ufeff";
+            csvString = bom + csvString;
+
+
+            // Create Blob and download link
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", `financial_report_${new Date().toISOString().slice(0, 10)}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        // =======================================================================
+        // UI CONTROL
+        // =======================================================================
+
+        /**
+         * Switches between Dashboard and Transactions view.
+         * @param {string} viewId 'dashboard' or 'transactions'
+         */
+        window.switchTab = function(viewId) {
+            const views = {
+                dashboard: document.getElementById('dashboardView'),
+                transactions: document.getElementById('transactionsView')
+            };
+            const buttons = {
+                dashboard: document.getElementById('tabDashboardBtn'),
+                transactions: document.getElementById('tabTransactionBtn')
+            };
+
+            for (const key in views) {
+                if (key === viewId) {
+                    views[key].classList.remove('hidden');
+                    buttons[key].classList.add('active');
+                } else {
+                    views[key].classList.add('hidden');
+                    buttons[key].classList.remove('active');
+                }
+            }
+        }
+
+        /**
+         * Custom Modal/Message Box (Replaces alert/confirm)
+         * @param {string} title
+         * @param {string} body
+         * @param {function} onConfirm Optional confirmation callback
+         */
+        function alertCustom(title, body, onConfirm = null) {
+            const modal = document.getElementById('messageBox');
+            document.getElementById('messageTitle').textContent = title;
+            document.getElementById('messageBody').textContent = body;
+            const confirmBtn = document.getElementById('messageConfirm');
+            const cancelBtn = document.getElementById('messageCancel');
+
+            // Setup for Alert (only show confirm/OK button)
+            confirmBtn.textContent = 'ตกลง';
+            confirmBtn.onclick = () => modal.classList.add('hidden');
+            cancelBtn.classList.add('hidden');
+
+            if (onConfirm) { // If it's used as a generic custom function
+                confirmBtn.onclick = () => {
+                    onConfirm();
+                    modal.classList.add('hidden');
+                };
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        /**
+         * Custom Modal/Confirm Box (Replaces window.confirm)
+         * @param {string} title
+         * @param {string} body
+         * @param {function} onConfirm Mandatory confirmation callback
+         */
+        function confirmCustom(title, body, onConfirm) {
+            const modal = document.getElementById('messageBox');
+            document.getElementById('messageTitle').textContent = title;
+            document.getElementById('messageBody').textContent = body;
+            const confirmBtn = document.getElementById('messageConfirm');
+            const cancelBtn = document.getElementById('messageCancel');
+
+            // Setup for Confirm
+            confirmBtn.textContent = 'ยืนยัน';
+            confirmBtn.onclick = () => {
+                onConfirm();
+                modal.classList.add('hidden');
+            };
+            cancelBtn.textContent = 'ยกเลิก';
+            cancelBtn.onclick = () => modal.classList.add('hidden');
+            cancelBtn.classList.remove('hidden');
+
+            modal.classList.remove('hidden');
+        }
+
+        // =======================================================================
+        // START APPLICATION
+        // =======================================================================
+
+        window.onload = initFirebase;
+    </script>
+</body>
+</html>
