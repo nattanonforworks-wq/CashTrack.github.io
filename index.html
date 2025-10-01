@@ -6,74 +6,109 @@
     
     <link rel="icon" type="image/png" href="money-icon.png"> 
     
-    <title>FinTrack</title>
+    <title>FinTrack - โปรแกรมจัดการการเงินส่วนบุคคล</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* Custom Styles for better visual separation */
+        /* Custom & Utility Styles */
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6; /* Gray 100 */
         }
         .container-box {
             background-color: white;
-            border-radius: 0.5rem; /* rounded-lg */
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); /* shadow-md */
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
         }
-        .income-color {
-            color: #10b981; /* Emerald 500 */
-        }
-        .expense-color {
-            color: #ef4444; /* Red 500 */
-        }
-        .balance-color {
-            color: #3b82f6; /* Blue 500 */
-        }
+        .income-color { color: #10b981; } /* Emerald 500 */
+        .expense-color { color: #ef4444; } /* Red 500 */
+        .balance-color { color: #3b82f6; } /* Blue 500 */
+        
+        /* Tab Navigation Styles */
         .tab-button {
             padding: 0.5rem 1rem;
             border-bottom: 3px solid transparent;
             font-weight: 600;
-            color: #6b7280; /* Gray 500 */
+            color: #6b7280;
             transition: all 0.2s;
         }
-        .tab-button:hover {
-            color: #4b5563; /* Gray 600 */
-        }
         .tab-button.active {
-            border-color: #3b82f6; /* Blue 500 */
-            color: #1f2937; /* Gray 800 */
+            border-color: #3b82f6;
+            color: #1f2937;
+        }
+
+        /* ------------------------------------------- */
+        /* 💡 MOBILE TABLE UX/UI FIX (Responsive Table) */
+        /* ------------------------------------------- */
+        @media (max-width: 767px) {
+            /* ซ่อนส่วนหัวตารางบนมือถือ */
+            .mobile-table thead {
+                display: none;
+            }
+            /* ทำให้แต่ละแถว (Row) กลายเป็นบล็อกที่มีเส้นขอบแยก */
+            .mobile-table tbody tr {
+                display: block;
+                margin-bottom: 0.75rem;
+                border: 1px solid #e5e7eb;
+                border-radius: 0.375rem;
+            }
+            /* ทำให้แต่ละเซลล์ (Cell) เป็นบล็อก จัดชิดขวา */
+            .mobile-table tbody td {
+                display: block;
+                text-align: right !important;
+                padding: 0.5rem 1rem;
+                border-bottom: 1px solid #f3f4f6;
+            }
+            /* สร้าง Label/หัวข้อ โดยใช้ค่าจาก data-label */
+            .mobile-table tbody td:before {
+                content: attr(data-label);
+                float: left;
+                font-weight: 600;
+                color: #4b5563;
+                font-size: 0.875rem;
+            }
+            /* ลบเส้นแบ่งสุดท้าย */
+            .mobile-table tbody td:last-child {
+                border-bottom: none;
+            }
+            /* จัดการปุ่มลบให้อยู่ตรงกลางของบล็อก */
+            .mobile-table td.action-cell {
+                text-align: center !important;
+                padding-top: 0.75rem;
+                padding-bottom: 0.75rem;
+            }
         }
     </style>
 </head>
 <body>
     <div class="min-h-screen">
         <header class="bg-white shadow-sm">
-    <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-        
-        <div class="flex items-center space-x-2">
-            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.485 0-4.5 2.015-4.5 4.5S9.515 17 12 17s4.5-2.015 4.5-4.5S14.485 8 12 8zM12 8V5m0 3a4.5 4.5 0 014.5 4.5m-4.5-4.5a4.5 4.5 0 00-4.5 4.5m4.5-4.5v9m-4.5-9L5 7m14 10l-4.5-4.5m0 0L12 17m4.5-4.5L19 17"></path>
-            </svg>
-            <span class="text-3xl font-extrabold text-gray-900 tracking-tight">
-                <span class="text-blue-600">Fin</span>Track
-            </span>
-        </div>
-        
-        <div class="ml-4 flex items-center space-x-4">
-            <button onclick="resetAllData()" class="text-sm text-red-600 hover:text-red-800 transition duration-150 font-medium py-1 px-3 border border-red-300 rounded-md hover:bg-red-50">
-                ล้างข้อมูลทั้งหมด 🗑️
-            </button>
-            <p id="authStatus" class="mt-1 text-sm text-gray-500 text-right">
-                สถานะ: <span class="font-medium text-blue-600">กำลังโหลด...</span>
-            </p>
-        </div>
-    </div>
-</header>
+            <div class="max-w-7xl mx-auto py-3 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+                
+                <div class="flex items-center space-x-1">
+                    <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.485 0-4.5 2.015-4.5 4.5S9.515 17 12 17s4.5-2.015 4.5-4.5S14.485 8 12 8zM12 8V5m0 3a4.5 4.5 0 014.5 4.5m-4.5-4.5a4.5 4.5 0 00-4.5 4.5m4.5-4.5v9m-4.5-9L5 7m14 10l-4.5-4.5m0 0L12 17m4.5-4.5L19 17"></path>
+                    </svg>
+                    <span class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+                        <span class="text-blue-600">Fin</span>Track
+                    </span>
+                </div>
+                
+                <div class="ml-4 flex items-center space-x-2 sm:space-x-4">
+                    <button onclick="resetAllData()" class="text-xs sm:text-sm text-red-600 hover:text-red-800 transition duration-150 font-medium py-1 px-2 sm:px-3 border border-red-300 rounded-md hover:bg-red-50">
+                        ล้างข้อมูล 🗑️
+                    </button>
+                    <p id="authStatus" class="text-xs text-gray-500 text-right hidden sm:block">
+                        สถานะ: <span class="font-medium text-blue-600">กำลังโหลด...</span>
+                    </p>
+                </div>
+            </div>
+        </header>
 
-        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-            <div class="bg-white px-4 sm:px-6 lg:px-8 pt-4 container-box shadow-none mb-4">
+        <main class="max-w-7xl mx-auto py-4 sm:py-6 px-2 sm:px-6 lg:px-8">
+            <div class="bg-white px-2 sm:px-6 lg:px-8 pt-4 container-box shadow-none mb-4">
                 <div class="flex border-b border-gray-200">
                     <button id="tabDashboardBtn" onclick="switchTab('dashboard')" class="tab-button active">แดชบอร์ดสรุป</button>
                     <button id="tabTransactionBtn" onclick="switchTab('transactions')" class="tab-button">รายการธุรกรรม</button>
@@ -81,45 +116,45 @@
             </div>
 
             <div id="dashboardView">
-                <div class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="container-box p-6 flex flex-col items-center text-center">
-                            <p class="text-sm font-medium text-gray-500">รายรับทั้งหมด</p>
-                            <p id="totalIncome" class="text-2xl font-bold mt-1 income-color">0.00 ฿</p>
+                <div class="space-y-4 sm:space-y-6">
+                    <div class="grid grid-cols-3 gap-2 sm:gap-6">
+                        <div class="container-box p-3 sm:p-6 flex flex-col items-center text-center">
+                            <p class="text-xs sm:text-sm font-medium text-gray-500">รายรับ</p>
+                            <p id="totalIncome" class="text-base sm:text-2xl font-bold mt-1 income-color">0.00 ฿</p>
                         </div>
-                        <div class="container-box p-6 flex flex-col items-center text-center">
-                            <p class="text-sm font-medium text-gray-500">รายจ่ายทั้งหมด</p>
-                            <p id="totalExpense" class="text-2xl font-bold mt-1 expense-color">0.00 ฿</p>
+                        <div class="container-box p-3 sm:p-6 flex flex-col items-center text-center">
+                            <p class="text-xs sm:text-sm font-medium text-gray-500">รายจ่าย</p>
+                            <p id="totalExpense" class="text-base sm:text-2xl font-bold mt-1 expense-color">0.00 ฿</p>
                         </div>
-                        <div class="container-box p-6 flex flex-col items-center text-center">
-                            <p class="text-sm font-medium text-gray-500">ยอดคงเหลือสุทธิ</p>
-                            <p id="netBalance" class="text-2xl font-bold mt-1 balance-color">0.00 ฿</p>
+                        <div class="container-box p-3 sm:p-6 flex flex-col items-center text-center">
+                            <p class="text-xs sm:text-sm font-medium text-gray-500">คงเหลือ</p>
+                            <p id="netBalance" class="text-base sm:text-2xl font-bold mt-1 balance-color">0.00 ฿</p>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div class="container-box p-6">
-                            <h2 class="text-xl font-semibold text-gray-900 mb-4 border-b pb-2">สัดส่วนรายจ่ายตามหมวดหมู่</h2>
-                            <div class="relative h-80 flex items-center justify-center">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                        <div class="container-box p-4 sm:p-6">
+                            <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4 border-b pb-2">สัดส่วนรายจ่าย</h2>
+                            <div class="relative h-64 sm:h-80 flex items-center justify-center">
                                 <canvas id="expensePieChart"></canvas>
                                 <div id="noPieData" class="absolute inset-0 flex items-center justify-center bg-white/80 hidden">
-                                    <p class="text-gray-500">ไม่สามารถแสดงแผนภูมิได้</p>
+                                    <p class="text-gray-500 text-sm">ไม่สามารถแสดงแผนภูมิได้</p>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="container-box p-6">
-                            <h2 class="text-xl font-semibold text-gray-900 mb-4 border-b pb-2">5 หมวดหมู่รายจ่ายสูงสุด</h2>
-                            <div class="relative h-80 flex items-center justify-center">
+                        <div class="container-box p-4 sm:p-6">
+                            <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4 border-b pb-2">5 หมวดหมู่รายจ่ายสูงสุด</h2>
+                            <div class="relative h-64 sm:h-80 flex items-center justify-center">
                                 <canvas id="expenseBarChart"></canvas>
                                 <div id="noBarData" class="absolute inset-0 flex items-center justify-center bg-white/80 hidden">
-                                    <p class="text-gray-500">ไม่สามารถแสดงแผนภูมิได้</p>
+                                    <p class="text-gray-500 text-sm">ไม่สามารถแสดงแผนภูมิได้</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="container-box p-6">
+                    <div class="container-box p-4 sm:p-6">
                         <h2 class="text-xl font-semibold text-gray-900 mb-4 border-b pb-2">วิเคราะห์การใช้จ่าย</h2>
                         <div id="categoryAnalysis" class="space-y-4">
                             <p class="text-gray-500">กำลังโหลด...</p>
@@ -129,8 +164,9 @@
             </div>
 
             <div id="transactionsView" class="hidden">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="lg:col-span-1 container-box p-6 h-fit">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                    
+                    <div class="lg:col-span-1 container-box p-4 sm:p-6 h-fit">
                         <h2 class="text-xl font-semibold text-gray-900 mb-4 border-b pb-2">บันทึกรายการใหม่</h2>
                         
                         <form onsubmit="addTransaction(event)">
@@ -196,17 +232,17 @@
                         </form>
                     </div>
 
-                    <div class="lg:col-span-2 container-box p-6">
+                    <div class="lg:col-span-2 container-box p-4 sm:p-6">
                         <div class="flex justify-between items-center mb-4 border-b pb-2">
                             <h2 class="text-xl font-semibold text-gray-900">ประวัติรายการบันทึก</h2>
                             <button onclick="exportCSV()" class="text-sm text-gray-600 hover:text-blue-600 transition duration-150 flex items-center space-x-1">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                <span>ส่งออก CSV</span>
+                                <span class="hidden sm:inline">ส่งออก CSV</span>
                             </button>
                         </div>
 
                         <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
+                            <table class="min-w-full divide-y divide-gray-200 mobile-table">
                                 <thead class="bg-gray-50">
                                     <tr>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่</th>
@@ -242,50 +278,35 @@
 
     <script>
         // =======================================================================
-        // LOCAL STORAGE & UTILITY SETUP - สำหรับการบันทึกข้อมูลในเครื่อง
+        // LOCAL STORAGE & UTILITY SETUP
         // =======================================================================
 
         const STORAGE_KEY = 'personalFinanceTransactions';
         let transactions = [];
-        let userId = 'local-user'; // กำหนด ID ผู้ใช้จำลอง
+        let userId = 'local-user';
         
-        // Global Chart Instances and Colors
         let pieChartInstance = null;
         let barChartInstance = null;
         const CHART_COLORS = [
-            '#ef4444', // Red 500
-            '#f97316', // Orange 500
-            '#f59e0b', // Amber 500
-            '#10b981', // Emerald 500
-            '#3b82f6', // Blue 500
-            '#8b5cf6', // Violet 500
-            '#ec4899', // Pink 500
-            '#6b7280', // Gray 500
-            '#14b8a6', // Teal 500
-            '#a855f7', // Purple 500
+            '#ef4444', '#f97316', '#f59e0b', '#10b981', '#3b82f6', 
+            '#8b5cf6', '#ec4899', '#6b7280', '#14b8a6', '#a855f7',
         ];
 
         /**
          * Converts number to formatted currency string (e.g., 10000 -> 10,000.00).
-         * @param {number} num
-         * @returns {string}
          */
         const formatCurrency = (num) => {
             return parseFloat(num).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         };
 
         /**
-         * Initializes the application by loading data from Local Storage.
+         * Initializes the application.
          */
         function initLocalStorage() {
-            // 1. อัปเดตสถานะ Auth (จำลอง)
             const authStatusEl = document.getElementById('authStatus');
-            authStatusEl.innerHTML = `สถานะ: <span class="font-medium text-blue-600">ทำงานแบบออฟไลน์ (Local Storage)</span> | ID ผู้ใช้: <span class="font-mono text-xs">${userId}</span>`;
+            authStatusEl.innerHTML = `สถานะ: <span class="font-medium text-blue-600">ทำงานแบบออฟไลน์</span> | ID: <span class="font-mono text-xs">${userId}</span>`;
             
-            // 2. โหลดข้อมูล
             loadTransactions();
-            
-            // 3. ตั้งค่าวันที่เริ่มต้นในฟอร์ม
             document.getElementById('date').value = new Date().toISOString().split('T')[0];
         }
 
@@ -295,7 +316,6 @@
         function saveTransactions() {
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
-                console.log("Transactions saved to Local Storage:", transactions.length);
             } catch (e) {
                 console.error("Error saving to Local Storage:", e);
                 alertCustom('บันทึกไม่สำเร็จ', 'ไม่สามารถบันทึกข้อมูลลงในเครื่องได้');
@@ -311,22 +331,20 @@
                 if (storedData) {
                     transactions = JSON.parse(storedData).map(t => ({
                         ...t,
-                        amount: parseFloat(t.amount) // Ensure amount is a number
+                        amount: parseFloat(t.amount)
                     }));
                 } else {
                     transactions = [];
                 }
-                // Sort by timestamp (newest first) or date (if timestamp is missing)
+                // Sort by timestamp (newest first)
                 transactions.sort((a, b) => {
                     const timeA = a.timestamp || a.date;
                     const timeB = b.timestamp || b.date;
-                    return timeB.localeCompare(timeA); // Simple string comparison for sort
+                    return timeB.localeCompare(timeA);
                 });
 
                 renderTransactions();
                 renderDashboard();
-                console.log("Transactions loaded:", transactions.length);
-
             } catch (e) {
                 console.error("Error loading from Local Storage:", e);
             }
@@ -334,12 +352,11 @@
 
 
         // =======================================================================
-        // DATA MANAGEMENT (CRUD) - Local Storage Version
+        // DATA MANAGEMENT (CRUD)
         // =======================================================================
 
         /**
          * Adds a new transaction.
-         * @param {Event} event
          */
         window.addTransaction = function(event) {
             event.preventDefault();
@@ -357,30 +374,24 @@
             }
 
             const newTransaction = {
-                id: Date.now().toString() + Math.random().toString(36).substring(2, 9), // Simple unique ID
-                type,
-                date,
-                amount,
-                category,
-                description,
-                timestamp: new Date().toISOString(), // Use ISO string as a timestamp
+                id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
+                type, date, amount, category, description,
+                timestamp: new Date().toISOString(),
             };
 
-            transactions.unshift(newTransaction); // Add to the beginning
+            transactions.unshift(newTransaction);
             saveTransactions();
-            loadTransactions(); // Re-render everything
+            loadTransactions();
 
             form.reset();
-            form.date.value = new Date().toISOString().split('T')[0]; // Reset date to today
+            form.date.value = new Date().toISOString().split('T')[0];
             form.category.selectedIndex = 0;
             
-            // Switch to transaction view after adding
-            switchTab('transactions'); 
+            switchTab('transactions');
         }
 
         /**
          * Deletes a transaction.
-         * @param {string} id
          */
         window.deleteTransaction = function(id) {
             confirmCustom('ยืนยันการลบ', 'คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้อย่างถาวร?', () => {
@@ -389,8 +400,7 @@
                 
                 if (transactions.length < initialLength) {
                     saveTransactions();
-                    loadTransactions(); // Re-render everything
-                    console.log("Transaction successfully deleted locally.");
+                    loadTransactions();
                 } else {
                     alertCustom('ลบไม่สำเร็จ', 'ไม่พบรายการที่ต้องการลบ');
                 }
@@ -398,7 +408,7 @@
         }
         
         /**
-         * Resets all transaction data by clearing Local Storage. (ฟังก์ชันที่เพิ่มเข้ามา)
+         * Resets all transaction data by clearing Local Storage.
          */
         window.resetAllData = function() {
             confirmCustom(
@@ -406,19 +416,10 @@
                 'การดำเนินการนี้จะลบรายการธุรกรรมทั้งหมดที่บันทึกไว้ในเครื่องอย่างถาวร คุณแน่ใจหรือไม่?', 
                 () => {
                     try {
-                        // ลบรายการธุรกรรมจาก Local Storage
                         localStorage.removeItem(STORAGE_KEY);
-                        
-                        // รีเซ็ตตัวแปร transactions ใน JavaScript
                         transactions = [];
-                        
-                        // โหลดหน้าจอใหม่ (ซึ่งจะแสดงเป็นข้อมูลว่างเปล่า)
                         loadTransactions(); 
-                        
-                        // แจ้งเตือนความสำเร็จ
                         alertCustom('ล้างข้อมูลสำเร็จ', 'ข้อมูลการเงินทั้งหมดถูกลบแล้ว');
-                        
-                        // กลับไปที่หน้า Dashboard เพื่อให้เห็นการเปลี่ยนแปลง
                         switchTab('dashboard');
                     } catch (e) {
                         console.error("Error clearing Local Storage:", e);
@@ -433,7 +434,7 @@
         // =======================================================================
 
         /**
-         * Renders the transaction list table.
+         * Renders the transaction list table (with mobile-friendly attributes).
          */
         function renderTransactions() {
             const listEl = document.getElementById('transactionList');
@@ -444,19 +445,20 @@
                 return;
             }
 
+            // **สำคัญ: เพิ่ม data-label ในแต่ละ td เพื่อให้ CSS สามารถสร้างหัวข้อในมุมมองมือถือได้**
             listEl.innerHTML = transactions.map(t => {
                 const amountClass = t.type === 'income' ? 'income-color font-semibold' : 'expense-color font-semibold';
                 const sign = t.type === 'income' ? '+' : '-';
 
                 return `
                     <tr class="hover:bg-gray-50 transition duration-100">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${t.date}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${t.description}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-xs font-medium text-gray-500">${t.category}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right ${amountClass}">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="วันที่">${t.date}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600" data-label="รายละเอียด">${t.description}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-xs font-medium text-gray-500" data-label="หมวดหมู่">${t.category}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right ${amountClass}" data-label="จำนวนเงิน">
                             ${sign} ${formatCurrency(t.amount)}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium action-cell" data-label="จัดการ">
                             <button onclick="deleteTransaction('${t.id}')" class="text-red-600 hover:text-red-900 transition duration-150 p-1 rounded-full hover:bg-red-100">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
@@ -511,11 +513,7 @@
                     plugins: {
                         legend: {
                             position: 'top',
-                            labels: {
-                                font: {
-                                    family: 'Inter',
-                                }
-                            }
+                            labels: { font: { family: 'Inter' } }
                         },
                         tooltip: {
                             callbacks: {
@@ -562,16 +560,12 @@
                                 font: { family: 'Inter' }
                             },
                             ticks: {
-                                callback: function(value) {
-                                    return formatCurrency(value);
-                                },
+                                callback: function(value) { return formatCurrency(value); },
                                 font: { family: 'Inter' }
                             }
                         },
                         y: {
-                            ticks: {
-                                font: { family: 'Inter' }
-                            }
+                            ticks: { font: { family: 'Inter' } }
                         }
                     },
                     plugins: {
@@ -606,7 +600,7 @@
             document.getElementById('totalIncome').textContent = formatCurrency(totalIncome) + ' ฿';
             document.getElementById('totalExpense').textContent = formatCurrency(totalExpense) + ' ฿';
             document.getElementById('netBalance').textContent = formatCurrency(netBalance) + ' ฿';
-            document.getElementById('netBalance').className = `text-2xl font-bold mt-1 ${netBalance >= 0 ? 'balance-color' : 'expense-color'}`;
+            document.getElementById('netBalance').className = `text-base sm:text-2xl font-bold mt-1 ${netBalance >= 0 ? 'balance-color' : 'expense-color'}`;
             
             // 2. Render Charts
             renderCharts(categoryTotals, totalExpense);
@@ -655,26 +649,22 @@
 
             const headers = ['ID', 'Date', 'Type', 'Category', 'Description', 'Amount', 'Timestamp'];
 
-            // Map data to CSV format
             const csvData = transactions.map(t => [
                 t.id,
                 t.date,
                 t.type === 'income' ? 'รายรับ' : 'รายจ่าย',
                 t.category,
-                // Sanitize description for CSV
                 `"${t.description.replace(/"/g, '""').replace(/\r?\n|\r/g, ' ')}"`,
                 t.amount,
                 t.timestamp || ''
             ]);
 
-            // Combine headers and data
             const csvArray = [headers.join(','), ...csvData.map(row => row.join(','))];
             let csvString = csvArray.join('\n');
             
-            // FIX: Prepend UTF-8 BOM (\ufeff) to ensure Excel recognizes Thai characters correctly.
+            // Prepend UTF-8 BOM (\ufeff) to ensure Excel recognizes Thai characters correctly.
             const bom = "\ufeff";
             csvString = bom + csvString;
-
 
             // Create Blob and download link
             const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
@@ -692,7 +682,7 @@
         }
 
         // =======================================================================
-        // UI CONTROL
+        // UI CONTROL & MODAL
         // =======================================================================
 
         /**
