@@ -7,12 +7,12 @@
     <title>FinTrack</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     
     <style>
         /* Custom Styles for better visual separation */
         body {
-            font-family: 'Noto Sans Thai', 'Inter', sans-serif; /* เพิ่ม Noto Sans Thai เพื่อรองรับภาษาไทยใน Chart.js */
+            font-family: 'Inter', sans-serif;
             background-color: #f3f4f6; /* Gray 100 */
         }
         .container-box {
@@ -43,72 +43,51 @@
             border-color: #3b82f6; /* Blue 500 */
             color: #1f2937; /* Gray 800 */
         }
-        
-        /* Custom styles for Chat */
-        .chat-container {
-            height: 400px;
-            overflow-y: auto;
-            border: 1px solid #e5e7eb; /* Gray 200 */
-            border-radius: 0.5rem;
-            padding: 1rem;
-            background-color: #f9fafb; /* Gray 50 */
-        }
     </style>
 </head>
 <body>
     <div class="min-h-screen">
         <header class="bg-white shadow-sm">
-            <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-                
-                <div class="flex items-center space-x-2">
-                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.485 0-4.5 2.015-4.5 4.5S9.515 17 12 17s4.5-2.015 4.5-4.5S14.485 8 12 8zM12 8V5m0 3a4.5 4.5 0 014.5 4.5m-4.5-4.5a4.5 4.5 0 00-4.5 4.5m4.5-4.5v9m-4.5-9L5 7m14 10l-4.5-4.5m0 0L12 17m4.5-4.5L19 17"></path>
-                    </svg>
-                    <span class="text-3xl font-extrabold text-gray-900 tracking-tight">
-                        <span class="text-blue-600">Fin</span>Track
-                    </span>
-                </div>
-                <div class="ml-4">
-                    <p id="authStatus" class="mt-1 text-sm text-gray-500 text-right">
-                        สถานะ: <span class="font-medium text-blue-600">กำลังโหลด...</span>
-                    </p>
-                </div>
-            </div>
-        </header>
+    <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        
+        <div class="flex items-center space-x-2">
+            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.485 0-4.5 2.015-4.5 4.5S9.515 17 12 17s4.5-2.015 4.5-4.5S14.485 8 12 8zM12 8V5m0 3a4.5 4.5 0 014.5 4.5m-4.5-4.5a4.5 4.5 0 00-4.5 4.5m4.5-4.5v9m-4.5-9L5 7m14 10l-4.5-4.5m0 0L12 17m4.5-4.5L19 17"></path>
+                </svg>
+            <span class="text-3xl font-extrabold text-gray-900 tracking-tight">
+                <span class="text-blue-600">Fin</span>Track
+            </span>
+        </div>
+        <div class="ml-4">
+            <p id="authStatus" class="mt-1 text-sm text-gray-500 text-right">
+                สถานะ: <span class="font-medium text-blue-600">กำลังโหลด...</span>
+            </p>
+        </div>
+    </div>
+</header>
 
         <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
             <div class="bg-white px-4 sm:px-6 lg:px-8 pt-4 container-box shadow-none mb-4">
                 <div class="flex border-b border-gray-200">
                     <button id="tabDashboardBtn" onclick="switchTab('dashboard')" class="tab-button active">แดชบอร์ดสรุป</button>
                     <button id="tabTransactionBtn" onclick="switchTab('transactions')" class="tab-button">รายการธุรกรรม</button>
-                    <button id="tabConsultationBtn" onclick="switchTab('consultation')" class="tab-button">ปรึกษา FinTrack AI</button>
                 </div>
             </div>
 
             <div id="dashboardView">
                 <div class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="container-box p-6 flex flex-col items-center text-center border-l-4 border-emerald-500">
+                        <div class="container-box p-6 flex flex-col items-center text-center">
                             <p class="text-sm font-medium text-gray-500">รายรับทั้งหมด</p>
                             <p id="totalIncome" class="text-2xl font-bold mt-1 income-color">0.00 ฿</p>
                         </div>
-                        <div class="container-box p-6 flex flex-col items-center text-center border-l-4 border-red-500">
+                        <div class="container-box p-6 flex flex-col items-center text-center">
                             <p class="text-sm font-medium text-gray-500">รายจ่ายทั้งหมด</p>
                             <p id="totalExpense" class="text-2xl font-bold mt-1 expense-color">0.00 ฿</p>
                         </div>
-                        <div class="container-box p-6 flex flex-col items-center text-center border-l-4 border-blue-500">
+                        <div class="container-box p-6 flex flex-col items-center text-center">
                             <p class="text-sm font-medium text-gray-500">ยอดคงเหลือสุทธิ</p>
                             <p id="netBalance" class="text-2xl font-bold mt-1 balance-color">0.00 ฿</p>
-                        </div>
-                    </div>
-                    
-                    <div class="container-box p-6">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-4 border-b pb-2 flex items-center">
-                            <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l-2 2h-4v2h4l2-2v13c0 .552.448 1 1 1h4c.552 0 1-.448 1-1V9l2-2h4v2h-4l-2 2v10c0 .552.448 1 1 1h4c.552 0 1-.448 1-1V5c0-.552-.448-1-1-1h-4c-.552 0-1 .448-1 1v2c0 .552-.448 1-1 1h-4c-.552 0-1 .448-1-1V5c0-.552-.448-1-1-1h-4c-.552 0-1 .448-1 1v14"></path></svg>
-                            FinTrack AI: วิเคราะห์และให้คำแนะนำเชิงลึก
-                        </h2>
-                        <div id="categoryAnalysis" class="space-y-4">
-                            <p class="text-gray-500">กำลังโหลด...</p>
                         </div>
                     </div>
 
@@ -133,12 +112,13 @@
                             </div>
                         </div>
                     </div>
+
                     <div class="container-box p-6">
                         <h2 class="text-xl font-semibold text-gray-900 mb-4 border-b pb-2">วิเคราะห์การใช้จ่าย</h2>
                         <div id="categoryAnalysis" class="space-y-4">
                             <p class="text-gray-500">กำลังโหลด...</p>
-                        <div>
-                    <div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -249,34 +229,6 @@
                     </div>
                 </div>
             </div>
-
-            <div id="consultationView" class="hidden">
-                <div class="container-box p-6">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-4 border-b pb-2 flex items-center">
-                        <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586M17 8V6a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h2v4l.414-.414"></path></svg>
-                        ห้องปรึกษาการเงินกับ FinTrack AI
-                    </h2>
-
-                    <div id="chatMessages" class="chat-container">
-                        <div class="flex justify-start mb-4">
-                            <div class="bg-gray-200 text-gray-800 max-w-xs lg:max-w-md p-3 rounded-t-xl rounded-br-xl shadow-md whitespace-pre-wrap">
-                                สวัสดีครับ/ค่ะ ผมคือ **FinTrack AI** ผู้เชี่ยวชาญด้านการเงินส่วนบุคคล
-                                
-                                คุณมีคำถามหรือต้องการคำแนะนำเกี่ยวกับเรื่องใดครับ/คะ?
-                                
-                                ลองถามเกี่ยวกับ: **ออม, ลงทุน, หนี้, ลดรายจ่าย**
-                            </div>
-                        </div>
-                        </div>
-
-                    <form onsubmit="handleAiConsultation(event)" class="mt-4 flex space-x-3">
-                        <input type="text" id="consultationInput" placeholder="พิมพ์คำถามของคุณ (เช่น วิธีออมเงินสำหรับมือใหม่)" required class="flex-grow border border-gray-300 rounded-lg shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500">
-                        <button type="submit" class="bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition duration-150 font-semibold flex-shrink-0">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        </button>
-                    </form>
-                </div>
-            </div>
         </main>
     </div>
 
@@ -359,14 +311,11 @@
             // 2. โหลดข้อมูล
             loadTransactions();
             
-            // 3. ตั้งค่าวันที่และเวลาเริ่มต้นในฟอร์ม 
+            // 3. ตั้งค่าวันที่และเวลาเริ่มต้นในฟอร์ม (แก้ไขจากเดิมที่ใช้ date เป็น datetime-local)
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             const datetimeLocalString = now.toISOString().slice(0, 16);
             document.getElementById('date').value = datetimeLocalString;
-
-             // 4. ตั้งค่า Chart.js font
-            Chart.defaults.font.family = 'Noto Sans Thai, Inter, sans-serif';
         }
 
         /**
@@ -415,7 +364,7 @@
 
 
         // =======================================================================
-        // DATA MANAGEMENT (CRUD) 
+        // DATA MANAGEMENT (CRUD) - Local Storage Version
         // =======================================================================
 
         /**
@@ -427,11 +376,11 @@
 
             const form = event.target;
             const type = form.type.value;
+            // date ตอนนี้เป็น datetime-local string
             const date = form.date.value; 
             const amount = parseFloat(form.amount.value);
             const category = form.category.value;
-            // ใช้ Description เป็นค่าว่างได้หากไม่ได้กรอก
-            const description = form.description.value.trim() || (type === 'income' ? 'รายการรับทั่วไป' : 'รายการจ่ายทั่วไป'); 
+            const description = form.description.value.trim();
 
             if (isNaN(amount) || amount <= 0 || !category) {
                 alertCustom('ข้อมูลไม่ถูกต้อง', 'โปรดกรอกจำนวนเงินและหมวดหมู่ให้ถูกต้อง');
@@ -483,7 +432,7 @@
         }
         
         /**
-         * Clears all data from Local Storage after confirmation.
+         * NEW FUNCTION: Clears all data from Local Storage after confirmation.
          */
         window.clearAllData = function() {
              confirmCustom('ยืนยันการล้างข้อมูลทั้งหมด', 
@@ -582,7 +531,7 @@
                             position: 'top',
                             labels: {
                                 font: {
-                                    family: 'Noto Sans Thai',
+                                    family: 'Inter',
                                 }
                             }
                         },
@@ -595,7 +544,7 @@
                                     return `${label}: ${formatCurrency(value)} ฿ (${percentage}%)`;
                                 }
                             },
-                            bodyFont: { family: 'Noto Sans Thai' },
+                            bodyFont: { family: 'Inter' },
                         }
                     }
                 }
@@ -628,138 +577,32 @@
                             title: {
                                 display: true,
                                 text: 'จำนวนเงิน (฿)',
-                                font: { family: 'Noto Sans Thai' }
+                                font: { family: 'Inter' }
                             },
                             ticks: {
                                 callback: function(value) {
                                     return formatCurrency(value);
                                 },
-                                font: { family: 'Noto Sans Thai' }
+                                font: { family: 'Inter' }
                             }
                         },
                         y: {
                             ticks: {
-                                font: { family: 'Noto Sans Thai' }
+                                font: { family: 'Inter' }
                             }
                         }
                     },
                     plugins: {
                         legend: { display: false },
-                        tooltip: { bodyFont: { family: 'Noto Sans Thai' } }
+                        tooltip: { bodyFont: { family: 'Inter' } }
                     }
                 }
             });
         }
-        
-        // =======================================================================
-        // AI ANALYSIS FUNCTION (DEEP DIVE LOGIC)
-        // =======================================================================
-        
-        /**
-         * Generates a deep-dive AI analysis of financial data.
-         * @param {number} totalIncome
-         * @param {number} totalExpense
-         * @param {number} netBalance
-         * @param {Object} categoryTotals - { category: amount, ... }
-         * @returns {string} HTML string of analysis insights.
-         */
-        function generateAiAnalysis(totalIncome, totalExpense, netBalance, categoryTotals) {
-            if (totalIncome === 0 && totalExpense === 0) {
-                return `
-                    <div class="p-4 bg-gray-50 rounded-lg">
-                        <p class="text-gray-700 text-sm">
-                            <span class="font-bold text-blue-600">FinTrack AI:</span> ขณะนี้ยังไม่มีข้อมูลรายรับและรายจ่ายที่เพียงพอสำหรับการวิเคราะห์เชิงลึก โปรดบันทึกรายการก่อนเริ่มการวิเคราะห์ครับ/ค่ะ
-                        </p>
-                    </div>
-                `;
-            }
-
-            const sortedCategories = Object.entries(categoryTotals).sort(([, a], [, b]) => b - a);
-            const hasNegativeBalance = netBalance < 0;
-            
-            let analysisHtml = '';
-            
-            // --- 1. Overall Financial Health ---
-            const balanceIcon = hasNegativeBalance ? '⚠️' : '✅';
-            
-            let healthMessage;
-            if (hasNegativeBalance) {
-                healthMessage = `สถานะการเงิน **น่าเป็นห่วง** (${formatCurrency(netBalance)} ฿ ติดลบ) แสดงว่ารายจ่ายสูงกว่ารายรับ คุณต้องลดการใช้จ่ายเร่งด่วน`;
-            } else if (totalIncome > 0 && netBalance / totalIncome > 0.3) {
-                healthMessage = `สถานะการเงิน **ยอดเยี่ยม** (${formatCurrency(netBalance)} ฿ คงเหลือ) อัตราส่วนการออม/คงเหลือสูงกว่า 30% ซึ่งเป็นระดับที่มั่นคงมาก`;
-            } else if (totalIncome > 0 && netBalance / totalIncome > 0.1) {
-                healthMessage = `สถานะการเงิน **ดี** (${formatCurrency(netBalance)} ฿ คงเหลือ) คุณมีการจัดการที่ดี แต่มีโอกาสออมได้มากขึ้น`;
-            } else {
-                healthMessage = `สถานะการเงิน **พอใช้** (${formatCurrency(netBalance)} ฿ คงเหลือ) ยอดคงเหลือค่อนข้างน้อยเมื่อเทียบกับรายรับ โปรดเฝ้าระวัง`;
-            }
-
-            analysisHtml += `
-                <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-600">
-                    <p class="text-sm font-semibold text-blue-800 flex items-center mb-1">${balanceIcon} สรุปภาพรวมการเงิน:</p>
-                    <p class="text-gray-700 text-sm">${healthMessage} (รายรับรวม: ${formatCurrency(totalIncome)} ฿ / รายจ่ายรวม: ${formatCurrency(totalExpense)} ฿)</p>
-                </div>
-            `;
-
-            // --- 2. Budget Killer Focus (Top Expense Category) ---
-            if (sortedCategories.length > 0 && totalExpense > 0) {
-                const topCategory = sortedCategories[0];
-                const topCategoryName = topCategory[0];
-                const topCategoryAmount = topCategory[1];
-                const topCategoryPercentage = (topCategoryAmount / totalExpense * 100).toFixed(1);
-
-                let killerAdvice;
-                if (topCategoryPercentage >= 50) {
-                    killerAdvice = `🚩 **(วิกฤต)** หมวดหมู่ **${topCategoryName}** มีสัดส่วนสูงถึง ${topCategoryPercentage}% ของรายจ่ายทั้งหมด นี่คือจุดที่ต้องแก้ไขทันที! FinTrack AI แนะนำให้กำหนดงบประมาณที่เข้มงวดในหมวดนี้`;
-                } else if (topCategoryPercentage >= 30) {
-                    killerAdvice = `🛑 **(เฝ้าระวัง)** หมวดหมู่ **${topCategoryName}** (${topCategoryPercentage}%) เป็นภาระค่าใช้จ่ายหลัก ควรตั้งงบประมาณจำกัดและหาทางลดลงอย่างน้อย 10-15%`;
-                } else {
-                    killerAdvice = `💡 **(โอกาสปรับปรุง)** หมวดหมู่ **${topCategoryName}** (${topCategoryPercentage}%) เป็นรายจ่ายสูงสุด คุณอาจเริ่มต้นลดรายจ่ายจากหมวดหมู่นี้ก่อนเป็นอันดับแรก`;
-                }
-                
-                analysisHtml += `
-                    <div class="p-4 bg-yellow-50 rounded-lg border-l-4 border-yellow-600">
-                        <p class="text-sm font-semibold text-yellow-800 mb-1">🔥 จุดที่ต้องควบคุม (Budget Killer):</p>
-                        <p class="text-gray-700 text-sm">${killerAdvice}</p>
-                    </div>
-                `;
-            }
-            
-            // --- 3. Proactive, Actionable Advice (Savings/Investment Rate) ---
-            const savingsRate = totalIncome > 0 ? ((netBalance / totalIncome) * 100).toFixed(1) : 0;
-            
-            let adviceMessage = '';
-            if (netBalance > 0 && totalIncome > 0) {
-                if (savingsRate >= 20) {
-                     adviceMessage = `📈 **การออม/ลงทุน:** อัตราส่วนการออม/คงเหลือของคุณคือ ${savingsRate}% ซึ่งอยู่ในเกณฑ์ดี แนะนำให้ **โอนเงิน ${formatCurrency(netBalance)} ฿ นี้เข้าบัญชีออม/ลงทุนทันที** เพื่อเพิ่มความมั่งคั่ง`;
-                } else if (savingsRate > 0) {
-                     adviceMessage = `💵 **โอกาสในการออม:** อัตราส่วนการออม/คงเหลือคือ ${savingsRate}% ซึ่งยังน้อยไป FinTrack AI แนะนำให้ตั้งเป้าหมายการออมขั้นต่ำที่ **20%** ของรายรับ โดยลดรายจ่ายในหมวดหมู่หลักลง`;
-                }
-            } else if (hasNegativeBalance) {
-                adviceMessage = `📉 **การจัดการหนี้:** เนื่องจากมียอดติดลบ FinTrack AI แนะนำให้กำหนดแผน **ลดรายจ่าย 10%** ในหมวดหมู่หลัก และนำเงินที่ประหยัดได้ไป **ชำระหนี้** ที่มีดอกเบี้ยสูงที่สุดก่อน`;
-            } else {
-                 adviceMessage = `💡 **คำแนะนำ:** คุณมีรายรับแต่ไม่มีรายจ่าย (หรือในทางกลับกัน) โปรดบันทึกรายการให้ครบถ้วนเพื่อให้ FinTrack AI สามารถให้คำแนะนำการออมและการจัดการหนี้ที่มีความแม่นยำ`;
-            }
-
-            analysisHtml += `
-                <div class="p-4 bg-emerald-50 rounded-lg border-l-4 border-emerald-600">
-                    <p class="text-sm font-semibold text-emerald-800 mb-1">🎯 คำแนะนำเชิงรุก FinTrack AI:</p>
-                    <p class="text-gray-700 text-sm">${adviceMessage}</p>
-                </div>
-            `;
-
-            // Add a final disclaimer
-            analysisHtml += `
-                <div class="mt-4 p-2 text-xs text-gray-500 bg-white rounded-lg border border-gray-200">
-                    *การวิเคราะห์นี้จำลองโดย FinTrack AI และอ้างอิงจากข้อมูลที่บันทึกไว้ใน Local Storage เท่านั้น
-                </div>
-            `;
-
-            return analysisHtml;
-        }
 
 
         /**
-         * Calculates and renders the dashboard summary and category analysis. (UPDATED)
+         * Calculates and renders the dashboard summary and category analysis.
          */
         function renderDashboard() {
             let totalIncome = 0;
@@ -786,139 +629,33 @@
             // 2. Render Charts
             renderCharts(categoryTotals, totalExpense);
 
-            // 3. Render AI Analysis (UPDATED: Use deep analysis)
+            // 3. Render Category Analysis 
             const analysisEl = document.getElementById('categoryAnalysis');
-            
-            // ** Call the new AI Analysis function **
-            analysisEl.innerHTML = generateAiAnalysis(totalIncome, totalExpense, netBalance, categoryTotals);
-        }
+            const totalExpenseForAnalysis = totalExpense;
 
-        // =======================================================================
-        // AI CONSULTATION LOGIC (SIMULATED CHATBOT)
-        // =======================================================================
-        
-        const chatContainer = document.getElementById('chatMessages');
+            const sortedCategories = Object.entries(categoryTotals).sort(([, a], [, b]) => b - a);
 
-        /**
-         * Renders a message bubble in the chat view.
-         * @param {'user'|'ai'} sender
-         * @param {string} text
-         */
-        function displayMessage(sender, text) {
-            const messageEl = document.createElement('div');
-            messageEl.className = sender === 'user' 
-                ? 'flex justify-end mb-4' 
-                : 'flex justify-start mb-4';
+            if (sortedCategories.length === 0) {
+                analysisEl.innerHTML = '<p class="text-gray-500">ไม่มีข้อมูลรายจ่ายที่ต้องวิเคราะห์</p>';
+                return;
+            }
 
-            messageEl.innerHTML = `
-                <div class="${sender === 'user' ? 'bg-blue-500 text-white rounded-bl-xl' : 'bg-gray-200 text-gray-800 rounded-br-xl'} 
-                            max-w-xs lg:max-w-md p-3 rounded-t-xl shadow-md whitespace-pre-wrap">
-                    ${text}
-                </div>
-            `;
-            chatContainer.appendChild(messageEl);
-            // Scroll to the latest message
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
+            analysisEl.innerHTML = sortedCategories.map(([category, amount]) => {
+                const percentage = totalExpenseForAnalysis > 0 ? ((amount / totalExpenseForAnalysis) * 100).toFixed(1) : 0;
+                const widthStyle = `width: ${percentage}%`;
 
-        /**
-         * Handles the user's consultation query.
-         */
-        window.handleAiConsultation = function(event) {
-            event.preventDefault();
-            const form = event.target;
-            const queryInput = form.querySelector('#consultationInput');
-            const query = queryInput.value.trim();
-
-            if (!query) return;
-
-            // 1. Display user query
-            displayMessage('user', query);
-            queryInput.value = '';
-
-            // 2. Simulate AI processing time (optional delay for realism)
-            setTimeout(() => {
-                // 3. Generate AI response
-                const response = generateAiResponse(query);
-                
-                // 4. Display AI response
-                displayMessage('ai', response);
-            }, 500);
-        }
-
-        /**
-         * Generates a specialized financial advice response based on the query (simulated AI).
-         * @param {string} query
-         * @returns {string} Financial advice string.
-         */
-        function generateAiResponse(query) {
-            // ใช้ regex เพื่อเก็บแค่ภาษาไทย, ตัวอักษรภาษาอังกฤษ, ตัวเลข, และช่องว่าง (และเอาเครื่องหมายวรรคตอนออก)
-            const normalizedQuery = query.toLowerCase().replace(/[^\u0E00-\u0E7F\w\s]/g, ''); 
-
-            // --- Keywords and Responses based on Financial Best Practices ---
-            if (normalizedQuery.includes('ออม') || normalizedQuery.includes('เก็บเงิน') || normalizedQuery.includes('เงินเก็บ')) {
                 return `
-                    💡 **หลักการออมเงินที่ดี:**
-                    1. **ออมก่อนใช้จ่าย:** ตั้งหักเงินออมอัตโนมัติทันทีที่เงินเดือนเข้า แนะนำให้เริ่มต้นที่ 10-20% ของรายได้
-                    2. **เงินสำรองฉุกเฉิน:** ต้องมีเงินสำรองอย่างน้อย **3-6 เท่า** ของค่าใช้จ่ายรายเดือนเพื่อความมั่นคง
-                    3. **ตั้งเป้าหมาย SMART:** กำหนดเป้าหมายให้ชัดเจน วัดผลได้ และมีกรอบเวลา (เช่น "ออม 50,000 บาท ภายใน 1 ปี เพื่อดาวน์รถ")
-                    4. **ใช้กฎ 50/30/20:** แบ่งรายได้เป็น 50% สำหรับค่าใช้จ่ายจำเป็น, 30% สำหรับค่าใช้จ่ายส่วนตัว, และ 20% สำหรับการออม/ลงทุน
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-sm">
+                            <span class="font-medium text-gray-700">${category}</span>
+                            <span class="text-red-500 font-semibold">${formatCurrency(amount)} ฿ (${percentage}%)</span>
+                        </div>
+                        <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div class="h-full bg-red-400 rounded-full" style="${widthStyle}"></div>
+                        </div>
+                    </div>
                 `;
-            }
-
-            if (normalizedQuery.includes('ลงทุน') || normalizedQuery.includes('ซื้อหุ้น') || normalizedQuery.includes('ผลตอบแทน')) {
-                return `
-                    📈 **เริ่มต้นเส้นทางการลงทุน:**
-                    1. **รู้จักความเสี่ยง:** ถามตัวเองว่ารับการขาดทุนได้แค่ไหน ถ้าต่ำให้เริ่มที่บัญชีเงินฝากปลอดภาษี หรือกองทุนรวมตลาดเงิน/ตราสารหนี้
-                    2. **ชนะเงินเฟ้อ:** ต้องลงทุนให้ได้ผลตอบแทนมากกว่า 3-5% ต่อปีในระยะยาว เพราะการฝากธนาคารอย่างเดียวเงินอาจด้อยค่าลง
-                    3. **กลยุทธ์ DCA:** สำหรับมือใหม่ ควรใช้วิธีทยอยลงทุนเป็นงวดๆ (**Dollar Cost Average**) อย่างสม่ำเสมอทุกเดือน
-                    4. **เงินเย็นเท่านั้น:** ใช้เงินที่ไม่มีความจำเป็นต้องใช้ใน **3-5 ปีข้างหน้า** ในการลงทุนระยะยาวเท่านั้น
-                `;
-            }
-            
-            if (normalizedQuery.includes('หนี้') || normalizedQuery.includes('บัตรเครดิต') || normalizedQuery.includes('ผ่อน')) {
-                return `
-                    📉 **คำแนะนำด้านการจัดการหนี้:**
-                    1. **ภาระหนี้:** ไม่ควรมีภาระผ่อนหนี้รวมกันเกิน **45%** ของรายได้ต่อเดือน
-                    2. **ลำดับการชำระ:** ให้ความสำคัญกับการปิด **หนี้ดอกเบี้ยสูง** (เช่น หนี้บัตรเครดิต, สินเชื่อส่วนบุคคล) เป็นอันดับแรก
-                    3. **หยุดสร้างหนี้:** หลีกเลี่ยงการก่อหนี้ที่ไม่จำเป็นเพื่อสนอง Need ของตัวเอง และอย่าค้ำประกันให้คนอื่น
-                    4. **เงินกู้นอกระบบ:** ห้ามใช้บริการเงินกู้นอกระบบโดยเด็ดขาด!
-                `;
-            }
-
-            if (normalizedQuery.includes('ลดรายจ่าย') || normalizedQuery.includes('ใช้เงินเยอะ') || normalizedQuery.includes('รูรั่ว') || normalizedQuery.includes('ค่าใช้จ่าย')) {
-                 return `
-                    ✂️ **เทคนิคการลดรายจ่ายอย่างมีประสิทธิภาพ:**
-                    1. **วิเคราะห์ Budget Killer:** เข้าไปที่หน้าแดชบอร์ด แล้วดูว่าหมวดหมู่ใดมีสัดส่วนสูงสุด นั่นคือ "รูรั่ว" ของคุณ
-                    2. **กำหนดงบประมาณ (Budgeting):** ตั้งเพดานการใช้จ่ายสำหรับหมวดหมู่ที่คุณระบุไว้ และพยายามลดลง **10-15%** ในเดือนถัดไป
-                    3. **บันทึกทุกรายการ:** การจดรายรับ-รายจ่ายอย่างละเอียดจะช่วยให้คุณเห็นพฤติกรรมการใช้เงินจริง และปรับพฤติกรรมได้อย่างตรงจุด
-                `;
-            }
-
-            if (normalizedQuery.includes('สวัสดี') || normalizedQuery.includes('หวัดดี')) {
-                 return `
-                    สวัสดีครับ/ค่ะ! FinTrack AI ยินดีให้คำปรึกษาด้านการเงินส่วนบุคคล คุณต้องการคำแนะนำเรื่อง **การออม การลงทุน การจัดการหนี้** หรือ **การลดรายจ่าย** หรือไม่ครับ/คะ?
-                `;
-            }
-            
-            if (normalizedQuery.includes('ขอบคุณ') || normalizedQuery.includes('ดีมาก')) {
-                 return `
-                    ด้วยความยินดีครับ/ค่ะ! หากมีคำถามด้านการเงินเพิ่มเติม ถาม FinTrack AI ได้ตลอดเวลาครับ/ค่ะ
-                `;
-            }
-
-            // Default response
-            return `
-                ขออภัยครับ/ค่ะ FinTrack AI ไม่แน่ใจว่าคุณกำลังต้องการคำปรึกษาเรื่องใด
-                
-                โปรดระบุคำถามที่เกี่ยวข้องกับเรื่องเหล่านี้อย่างชัดเจน:
-                - **ออม/เก็บเงิน**
-                - **ลงทุน/หุ้น**
-                - **หนี้/บัตรเครดิต**
-                - **ลดรายจ่าย**
-                
-                *FinTrack AI เป็นระบบจำลองการให้คำปรึกษาทางการเงินส่วนบุคคล และไม่ใช่การให้คำแนะนำด้านการลงทุนจริง*
-            `;
+            }).join('');
         }
 
         // =======================================================================
@@ -994,8 +731,7 @@
                         const amountStr = values[4];
 
                         const type = typeStr === 'รายรับ' ? 'income' : 'expense';
-                        // ลบเครื่องหมายจุลภาคออกจากตัวเลขก่อน Parse
-                        const amount = parseFloat(amountStr.replace(/,/g, ''));
+                        const amount = parseFloat(amountStr);
                         
                         // ตรวจสอบข้อมูลพื้นฐาน
                         if (isNaN(amount) || amount <= 0) continue; 
@@ -1069,8 +805,8 @@
                     `"${t.date}"`, 
                     // 2. Type (รายรับ/รายจ่าย)
                     t.type === 'income' ? 'รายรับ' : 'รายจ่าย', 
-                    // 3. Category (รายการ) - ใช้ Double Quotes เพื่อรองรับข้อความที่มีเครื่องหมายจุลภาค
-                    `"${t.category.replace(/"/g, '""')}"`, 
+                    // 3. Category (รายการ)
+                    `"${t.category}"`, 
                     // 4. Description (รายละเอียดรายการ) - Sanitize และครอบด้วย Double Quotes
                     `"${t.description.replace(/"/g, '""').replace(/\r?\n|\r/g, ' ')}"`, 
                     // 5. Price/Amount (ราคา) - ใช้ค่าบวก
@@ -1110,13 +846,11 @@
         window.switchTab = function(viewId) {
             const views = {
                 dashboard: document.getElementById('dashboardView'),
-                transactions: document.getElementById('transactionsView'),
-                consultation: document.getElementById('consultationView')
+                transactions: document.getElementById('transactionsView')
             };
             const buttons = {
                 dashboard: document.getElementById('tabDashboardBtn'),
-                transactions: document.getElementById('tabTransactionBtn'),
-                consultation: document.getElementById('tabConsultationBtn')
+                transactions: document.getElementById('tabTransactionBtn')
             };
 
             for (const key in views) {
