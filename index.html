@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="https://img.freepik.com/free-psd/money-illustration-isolated_23-2151568514.jpg">
-    <title>FinTrack - ระบบติดตามการเงินส่วนบุคคล</title>
+    <title>FinTrack</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
@@ -12,14 +12,13 @@
     <style>
         /* Custom Styles for better visual separation */
         body {
-            font-family: 'Noto Sans Thai', 'Inter', sans-serif;
+            font-family: 'Noto Sans Thai', 'Inter', sans-serif; /* เพิ่ม Noto Sans Thai เพื่อรองรับภาษาไทยใน Chart.js */
             background-color: #f3f4f6; /* Gray 100 */
         }
         .container-box {
             background-color: white;
             border-radius: 0.5rem; /* rounded-lg */
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); /* shadow-md */
-            padding: 1.5rem;
         }
         .income-color {
             color: #10b981; /* Emerald 500 */
@@ -30,210 +29,260 @@
         .balance-color {
             color: #3b82f6; /* Blue 500 */
         }
-        .tab-btn {
-            @apply px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition duration-150;
+        .tab-button {
+            padding: 0.5rem 1rem;
+            border-bottom: 3px solid transparent;
+            font-weight: 600;
+            color: #6b7280; /* Gray 500 */
+            transition: all 0.2s;
         }
-        .tab-btn.active {
-            @apply bg-blue-600 text-white hover:bg-blue-700 shadow-md;
+        .tab-button:hover {
+            color: #4b5563; /* Gray 600 */
+        }
+        .tab-button.active {
+            border-color: #3b82f6; /* Blue 500 */
+            color: #1f2937; /* Gray 800 */
+        }
+        
+        /* Custom styles for Chat */
+        .chat-container {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb; /* Gray 200 */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            background-color: #f9fafb; /* Gray 50 */
         }
     </style>
 </head>
-<body class="min-h-screen">
-
-    <header class="bg-white shadow-sm sticky top-0 z-10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-900">
-                <span class="text-blue-600">FinTrack</span> <span class="text-gray-400 text-base font-normal">ส่วนบุคคล</span>
-            </h1>
-            <div id="authStatus" class="text-xs text-gray-500">
-                สถานะ: <span class="font-medium text-red-600">กำลังโหลด...</span>
-            </div>
-        </div>
-    </header>
-
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        <div class="mb-6 flex space-x-3">
-            <button id="tabDashboardBtn" class="tab-btn active" onclick="switchTab('dashboard')">
-                แดชบอร์ด & AI Analysis
-            </button>
-            <button id="tabTransactionBtn" class="tab-btn" onclick="switchTab('transactions')">
-                รายการธุรกรรมทั้งหมด
-            </button>
-        </div>
-
-        <div class="mb-8">
-             <div class="container-box p-6 bg-blue-50 border-t-4 border-blue-600">
-                <h2 class="text-xl font-semibold text-gray-900 mb-4">บันทึกรายการใหม่</h2>
-                <form id="transactionForm" onsubmit="addTransaction(event)" class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
-                    
-                    <div class="md:col-span-1">
-                        <label for="type" class="block text-sm font-medium text-gray-700">ประเภท</label>
-                        <select id="type" name="type" required class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border">
-                            <option value="expense">รายจ่าย</option>
-                            <option value="income">รายรับ</option>
-                        </select>
-                    </div>
-
-                    <div class="md:col-span-1">
-                        <label for="date" class="block text-sm font-medium text-gray-700">วันที่/เวลา</label>
-                        <input type="datetime-local" id="date" name="date" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2">
-                    </div>
-
-                    <div class="md:col-span-1">
-                        <label for="amount" class="block text-sm font-medium text-gray-700">จำนวนเงิน (฿)</label>
-                        <input type="number" id="amount" name="amount" step="0.01" min="0.01" required placeholder="100.00" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2">
-                    </div>
-                    
-                    <div class="md:col-span-1">
-                        <label for="category" class="block text-sm font-medium text-gray-700">หมวดหมู่/รายการ</label>
-                         <select id="category" name="category" required class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border">
-                            <option value="" disabled selected>เลือกหมวดหมู่...</option>
-                            <optgroup label="รายจ่าย (Expense)">
-                                <option value="อาหารและเครื่องดื่ม">อาหารและเครื่องดื่ม</option>
-                                <option value="เดินทางและยานพาหนะ">เดินทางและยานพาหนะ</option>
-                                <option value="ค่าสาธารณูปโภค">ค่าสาธารณูปโภค</option>
-                                <option value="ช้อปปิ้ง">ช้อปปิ้ง</option>
-                                <option value="ความบันเทิง">ความบันเทิง</option>
-                                <option value="สุขภาพและความงาม">สุขภาพและความงาม</option>
-                                <option value="อื่นๆ (จ่าย)">อื่นๆ (จ่าย)</option>
-                            </optgroup>
-                            <optgroup label="รายรับ (Income)">
-                                <option value="เงินเดือน">เงินเดือน</option>
-                                <option value="รายได้เสริม">รายได้เสริม</option>
-                                <option value="ปันผล/ดอกเบี้ย">ปันผล/ดอกเบี้ย</option>
-                                <option value="อื่นๆ (รับ)">อื่นๆ (รับ)</option>
-                            </optgroup>
-                        </select>
-                    </div>
-
-                    <div class="md:col-span-1">
-                        <label for="description" class="block text-sm font-medium text-gray-700">รายละเอียด</label>
-                        <input type="text" id="description" name="description" placeholder="ซื้อกาแฟ/โบนัสสิ้นปี" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2">
-                    </div>
-
-                    <div class="md:col-span-1">
-                        <button type="submit" class="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150">
-                            บันทึก
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div id="dashboardView">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<body>
+    <div class="min-h-screen">
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
                 
-                <div class="container-box border-l-4 border-emerald-500">
-                    <p class="text-sm font-medium text-gray-500">รายรับทั้งหมด</p>
-                    <p id="totalIncome" class="text-2xl font-bold mt-1 income-color">0.00 ฿</p>
+                <div class="flex items-center space-x-2">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.485 0-4.5 2.015-4.5 4.5S9.515 17 12 17s4.5-2.015 4.5-4.5S14.485 8 12 8zM12 8V5m0 3a4.5 4.5 0 014.5 4.5m-4.5-4.5a4.5 4.5 0 00-4.5 4.5m4.5-4.5v9m-4.5-9L5 7m14 10l-4.5-4.5m0 0L12 17m4.5-4.5L19 17"></path>
+                    </svg>
+                    <span class="text-3xl font-extrabold text-gray-900 tracking-tight">
+                        <span class="text-blue-600">Fin</span>Track
+                    </span>
                 </div>
-                
-                <div class="container-box border-l-4 border-red-500">
-                    <p class="text-sm font-medium text-gray-500">รายจ่ายทั้งหมด</p>
-                    <p id="totalExpense" class="text-2xl font-bold mt-1 expense-color">0.00 ฿</p>
+                <div class="ml-4">
+                    <p id="authStatus" class="mt-1 text-sm text-gray-500 text-right">
+                        สถานะ: <span class="font-medium text-blue-600">กำลังโหลด...</span>
+                    </p>
                 </div>
+            </div>
+        </header>
 
-                <div class="container-box border-l-4 border-blue-500">
-                    <p class="text-sm font-medium text-gray-500">ยอดคงเหลือสุทธิ</p>
-                    <p id="netBalance" class="text-2xl font-bold mt-1 balance-color">0.00 ฿</p>
+        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <div class="bg-white px-4 sm:px-6 lg:px-8 pt-4 container-box shadow-none mb-4">
+                <div class="flex border-b border-gray-200">
+                    <button id="tabDashboardBtn" onclick="switchTab('dashboard')" class="tab-button active">แดชบอร์ดสรุป</button>
+                    <button id="tabTransactionBtn" onclick="switchTab('transactions')" class="tab-button">รายการธุรกรรม</button>
+                    <button id="tabConsultationBtn" onclick="switchTab('consultation')" class="tab-button">ปรึกษา FinTrack AI</button>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div id="dashboardView">
+                <div class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="container-box p-6 flex flex-col items-center text-center border-l-4 border-emerald-500">
+                            <p class="text-sm font-medium text-gray-500">รายรับทั้งหมด</p>
+                            <p id="totalIncome" class="text-2xl font-bold mt-1 income-color">0.00 ฿</p>
+                        </div>
+                        <div class="container-box p-6 flex flex-col items-center text-center border-l-4 border-red-500">
+                            <p class="text-sm font-medium text-gray-500">รายจ่ายทั้งหมด</p>
+                            <p id="totalExpense" class="text-2xl font-bold mt-1 expense-color">0.00 ฿</p>
+                        </div>
+                        <div class="container-box p-6 flex flex-col items-center text-center border-l-4 border-blue-500">
+                            <p class="text-sm font-medium text-gray-500">ยอดคงเหลือสุทธิ</p>
+                            <p id="netBalance" class="text-2xl font-bold mt-1 balance-color">0.00 ฿</p>
+                        </div>
+                    </div>
+                    
+                    <div class="container-box p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4 border-b pb-2 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l-2 2h-4v2h4l2-2v13c0 .552.448 1 1 1h4c.552 0 1-.448 1-1V9l2-2h4v2h-4l-2 2v10c0 .552.448 1 1 1h4c.552 0 1-.448 1-1V5c0-.552-.448-1-1-1h-4c-.552 0-1 .448-1 1v2c0 .552-.448 1-1 1h-4c-.552 0-1 .448-1-1V5c0-.552-.448-1-1-1h-4c-.552 0-1 .448-1 1v14"></path></svg>
+                            FinTrack AI: วิเคราะห์และให้คำแนะนำเชิงลึก
+                        </h2>
+                        <div id="categoryAnalysis" class="space-y-4">
+                            <p class="text-gray-500">กำลังโหลด...</p>
+                        </div>
+                    </div>
 
-                <div class="container-box lg:col-span-2">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                        <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l-2 2h-4v2h4l2-2v13c0 .552.448 1 1 1h4c.552 0 1-.448 1-1V9l2-2h4v2h-4l-2 2v10c0 .552.448 1 1 1h4c.552 0 1-.448 1-1V5c0-.552-.448-1-1-1h-4c-.552 0-1 .448-1 1v2c0 .552-.448 1-1 1h-4c-.552 0-1-.448-1-1V5c0-.552-.448-1-1-1h-4c-.552 0-1 .448-1 1v14"></path></svg>
-                        FinTrack AI: วิเคราะห์และให้คำแนะนำ
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="container-box p-6">
+                            <h2 class="text-xl font-semibold text-gray-900 mb-4 border-b pb-2">สัดส่วนรายจ่ายตามหมวดหมู่</h2>
+                            <div class="relative h-80 flex items-center justify-center">
+                                <canvas id="expensePieChart"></canvas>
+                                <div id="noPieData" class="absolute inset-0 flex items-center justify-center bg-white/80 hidden">
+                                    <p class="text-gray-500">ไม่สามารถแสดงแผนภูมิได้</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="container-box p-6">
+                            <h2 class="text-xl font-semibold text-gray-900 mb-4 border-b pb-2">5 หมวดหมู่รายจ่ายสูงสุด</h2>
+                            <div class="relative h-80 flex items-center justify-center">
+                                <canvas id="expenseBarChart"></canvas>
+                                <div id="noBarData" class="absolute inset-0 flex items-center justify-center bg-white/80 hidden">
+                                    <p class="text-gray-500">ไม่สามารถแสดงแผนภูมิได้</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="transactionsView" class="hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-1 container-box p-6 h-fit">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4 border-b pb-2">บันทึกรายการใหม่</h2>
+                        
+                        <form onsubmit="addTransaction(event)">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">ประเภท</label>
+                                    <div class="mt-1 flex space-x-4">
+                                        <label class="inline-flex items-center">
+                                            <input type="radio" name="type" value="income" class="form-radio text-emerald-600" checked>
+                                            <span class="ml-2 income-color font-medium">รายรับ</span>
+                                        </label>
+                                        <label class="inline-flex items-center">
+                                            <input type="radio" name="type" value="expense" class="form-radio text-red-600">
+                                            <span class="ml-2 expense-color font-medium">รายจ่าย</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="date" class="block text-sm font-medium text-gray-700">วันที่และเวลา</label>
+                                    <input type="datetime-local" id="date" name="date" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                                </div>
+
+                                <div>
+                                    <label for="amount" class="block text-sm font-medium text-gray-700">จำนวนเงิน (฿)</label>
+                                    <input type="number" id="amount" name="amount" required min="0.01" step="0.01" placeholder="เช่น 1,500.00" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                                </div>
+
+                                <div>
+                                    <label for="category" class="block text-sm font-medium text-gray-700">หมวดหมู่</label>
+                                    <select id="category" name="category" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                                        <option value="">-- เลือกหมวดหมู่ --</option>
+                                        <optgroup label="รายรับ">
+                                            <option value="เงินเดือน">เงินเดือน</option>
+                                            <option value="รายได้เสริม">รายได้เสริม</option>
+                                            <option value="โบนัส">โบนัส</option>
+                                            <option value="ลงทุน">ลงทุน</option>
+                                            <option value="อื่นๆ (รับ)">อื่นๆ (รับ)</option>
+                                        </optgroup>
+                                        <optgroup label="รายจ่าย">
+                                            <option value="อาหาร/เครื่องดื่ม">อาหาร/เครื่องดื่ม</option>
+                                            <option value="เดินทาง/คมนาคม">เดินทาง/คมนาคม</option>
+                                            <option value="ค่าเช่า/ผ่อนบ้าน">ค่าเช่า/ผ่อนบ้าน</option>
+                                            <option value="ค่าสาธารณูปโภค">ค่าสาธารณูปโภค</option>
+                                            <option value="ช้อปปิ้ง/เสื้อผ้า">ช้อปปิ้ง/เสื้อผ้า</option>
+                                            <option value="บันเทิง/สันทนาการ">บันเทิง/สันทนาการ</option>
+                                            <option value="การศึกษา">การศึกษา</option>
+                                            <option value="สุขภาพ/ความงาม">สุขภาพ/ความงาม</option>
+                                            <option value="อื่นๆ (จ่าย)">อื่นๆ (จ่าย)</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label for="description" class="block text-sm font-medium text-gray-700">รายละเอียด</label>
+                                    <input type="text" id="description" name="description" placeholder="เช่น จ่ายค่ากาแฟ, รับเงินเดือน" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                                </div>
+
+                                <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-150 font-semibold">
+                                    บันทึกรายการ
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="lg:col-span-2 container-box p-6">
+                        <div class="flex justify-between items-center mb-4 border-b pb-2">
+                            <h2 class="text-xl font-semibold text-gray-900">ประวัติรายการบันทึก</h2>
+                            <div class="flex space-x-4">
+                                <button onclick="clearAllData()" class="text-sm text-red-600 hover:text-red-800 transition duration-150 flex items-center space-x-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    <span>ล้างข้อมูลทั้งหมด</span>
+                                </button>
+                                <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="importCSV(event)">
+                                <button onclick="document.getElementById('csvFileInput').click()" class="text-sm text-gray-600 hover:text-blue-600 transition duration-150 flex items-center space-x-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                    <span>นำเข้า CSV</span>
+                                </button>
+                                <button onclick="exportCSV()" class="text-sm text-gray-600 hover:text-blue-600 transition duration-150 flex items-center space-x-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                    <span>ส่งออก CSV</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่และเวลา</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รายละเอียด</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">หมวดหมู่</th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวนเงิน</th>
+                                        <th scope="col" class="relative px-6 py-3"><span class="sr-only">Delete</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactionList" class="bg-white divide-y divide-gray-200">
+                                    <tr><td colspan="5" class="p-4 text-center text-gray-500">กำลังโหลดรายการ...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="consultationView" class="hidden">
+                <div class="container-box p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4 border-b pb-2 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586M17 8V6a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h2v4l.414-.414"></path></svg>
+                        ห้องปรึกษาการเงินกับ FinTrack AI
                     </h2>
-                    <div id="categoryAnalysis" class="space-y-4">
-                        <p class="text-gray-500">กำลังโหลดการวิเคราะห์...</p>
-                    </div>
-                </div>
 
-                <div class="container-box">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-4">สัดส่วนรายจ่ายตามหมวดหมู่</h2>
-                    <div class="relative h-80">
-                         <canvas id="expensePieChart"></canvas>
-                         <p id="noPieData" class="absolute inset-0 flex items-center justify-center text-gray-500 bg-white/70 rounded-lg hidden">ไม่พบข้อมูลรายจ่าย</p>
-                    </div>
-                </div>
+                    <div id="chatMessages" class="chat-container">
+                        <div class="flex justify-start mb-4">
+                            <div class="bg-gray-200 text-gray-800 max-w-xs lg:max-w-md p-3 rounded-t-xl rounded-br-xl shadow-md whitespace-pre-wrap">
+                                สวัสดีครับ/ค่ะ ผมคือ **FinTrack AI** ผู้เชี่ยวชาญด้านการเงินส่วนบุคคล
+                                
+                                คุณมีคำถามหรือต้องการคำแนะนำเกี่ยวกับเรื่องใดครับ/คะ?
+                                
+                                ลองถามเกี่ยวกับ: **ออม, ลงทุน, หนี้, ลดรายจ่าย**
+                            </div>
+                        </div>
+                        </div>
 
-                <div class="container-box">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-4">5 อันดับแรกของรายจ่าย</h2>
-                    <div class="relative h-80">
-                        <canvas id="expenseBarChart"></canvas>
-                        <p id="noBarData" class="absolute inset-0 flex items-center justify-center text-gray-500 bg-white/70 rounded-lg hidden">ไม่พบข้อมูลรายจ่าย</p>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <div id="transactionsView" class="hidden">
-            <div class="container-box p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold text-gray-900">รายการธุรกรรมทั้งหมด</h2>
-                    <div class="flex space-x-3">
-                        <button onclick="exportCSV()" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                             ส่งออก CSV
+                    <form onsubmit="handleAiConsultation(event)" class="mt-4 flex space-x-3">
+                        <input type="text" id="consultationInput" placeholder="พิมพ์คำถามของคุณ (เช่น วิธีออมเงินสำหรับมือใหม่)" required class="flex-grow border border-gray-300 rounded-lg shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500">
+                        <button type="submit" class="bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition duration-150 font-semibold flex-shrink-0">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         </button>
-                        <label for="csvFile" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                             นำเข้า CSV
-                        </label>
-                        <input type="file" id="csvFile" accept=".csv" class="hidden" onchange="importCSV(event)">
-
-                        <button onclick="clearAllData()" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                             ล้างข้อมูล
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="overflow-x-auto shadow border-b border-gray-200 sm:rounded-lg">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่/เวลา</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รายละเอียด</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">หมวดหมู่</th>
-                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวนเงิน</th>
-                                <th scope="col" class="relative px-6 py-3"><span class="sr-only">ลบ</span></th>
-                            </tr>
-                        </thead>
-                        <tbody id="transactionList" class="bg-white divide-y divide-gray-200">
-                            <tr><td colspan="5" class="p-4 text-center text-gray-500">กำลังโหลดรายการ...</td></tr>
-                        </tbody>
-                    </table>
+                    </form>
                 </div>
             </div>
-        </div>
+        </main>
+    </div>
 
-    </main>
-    
-    <div id="messageBox" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden z-50 transition-opacity flex items-center justify-center">
-        <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full p-6">
-            <div class="flex items-start">
-                <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
-                    <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <div id="messageBox" class="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm m-4">
+            <div class="p-6">
+                <h3 id="messageTitle" class="text-lg font-semibold text-gray-900 mb-3">Title</h3>
+                <p id="messageBody" class="text-sm text-gray-600 mb-4">Body</p>
+                <div class="flex justify-end space-x-3">
+                    <button id="messageCancel" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition duration-150 hidden">ยกเลิก</button>
+                    <button id="messageConfirm" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition duration-150">ตกลง</button>
                 </div>
-                <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                    <h3 id="messageTitle" class="text-lg leading-6 font-medium text-gray-900">หัวข้อ</h3>
-                    <div class="mt-2">
-                        <p id="messageBody" class="text-sm text-gray-500">รายละเอียด</p>
-                    </div>
-                </div>
-            </div>
-            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
-                <button type="button" id="messageConfirm" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
-                    ตกลง
-                </button>
-                <button type="button" id="messageCancel" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm hidden">
-                    ยกเลิก
-                </button>
             </div>
         </div>
     </div>
@@ -250,16 +299,16 @@
         let pieChartInstance = null;
         let barChartInstance = null;
         const CHART_COLORS = [
-            '#ef4444', // Red 500
-            '#f97316', // Orange 600
-            '#f59e0b', // Amber 500
-            '#10b981', // Emerald 500
-            '#3b82f6', // Blue 500
-            '#8b5cf6', // Violet 500
-            '#ec4899', // Pink 500
-            '#6b7280', // Gray 500
-            '#14b8a6', // Teal 500
-            '#a855f7', // Purple 500
+            '#ef4444', 
+            '#f97316', 
+            '#f59e0b', 
+            '#10b981', 
+            '#3b82f6', 
+            '#8b5cf6', 
+            '#ec4899', 
+            '#6b7280', 
+            '#14b8a6', 
+            '#a855f7', 
         ];
 
         /**
@@ -286,7 +335,7 @@
 
                 const buddhistYear = parseInt(dateParts[0]) + 543; 
                 const date = `${dateParts[2]}/${dateParts[1]}/${buddhistYear}`;
-                const time = parts[1] ? parts[1].substring(0, 5) : '00:00'; // Ensure HH:mm format
+                const time = parts[1] ? parts[1] : '00:00';
                 return `${date} ${time} น.`;
             } catch (e) {
                 return isoString;
@@ -304,13 +353,13 @@
             // 2. โหลดข้อมูล
             loadTransactions();
             
-            // 3. ตั้งค่าวันที่และเวลาเริ่มต้นในฟอร์ม
+            // 3. ตั้งค่าวันที่และเวลาเริ่มต้นในฟอร์ม 
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             const datetimeLocalString = now.toISOString().slice(0, 16);
             document.getElementById('date').value = datetimeLocalString;
 
-            // 4. ตั้งค่า Chart.js font
+             // 4. ตั้งค่า Chart.js font
             Chart.defaults.font.family = 'Noto Sans Thai, Inter, sans-serif';
         }
 
@@ -343,8 +392,8 @@
                 }
                 // Sort by timestamp (newest first)
                 transactions.sort((a, b) => {
-                    const timeA = a.date || a.timestamp;
-                    const timeB = b.date || b.timestamp;
+                    const timeA = a.timestamp || a.date;
+                    const timeB = b.timestamp || b.date;
                     // เรียงจากใหม่สุดไปเก่าสุด
                     return timeB.localeCompare(timeA); 
                 });
@@ -360,7 +409,7 @@
 
 
         // =======================================================================
-        // DATA MANAGEMENT (CRUD) - Local Storage Version
+        // DATA MANAGEMENT (CRUD) 
         // =======================================================================
 
         /**
@@ -372,11 +421,11 @@
 
             const form = event.target;
             const type = form.type.value;
-            // date ตอนนี้เป็น datetime-local string (YYYY-MM-DDTHH:mm)
             const date = form.date.value; 
             const amount = parseFloat(form.amount.value);
             const category = form.category.value;
-            const description = form.description.value.trim() || (type === 'income' ? 'รายรับทั่วไป' : 'ค่าใช้จ่ายทั่วไป');
+            // ใช้ Description เป็นค่าว่างได้หากไม่ได้กรอก
+            const description = form.description.value.trim() || (type === 'income' ? 'รายการรับทั่วไป' : 'รายการจ่ายทั่วไป'); 
 
             if (isNaN(amount) || amount <= 0 || !category) {
                 alertCustom('ข้อมูลไม่ถูกต้อง', 'โปรดกรอกจำนวนเงินและหมวดหมู่ให้ถูกต้อง');
@@ -431,9 +480,9 @@
          * Clears all data from Local Storage after confirmation.
          */
         window.clearAllData = function() {
-            confirmCustom('ยืนยันการล้างข้อมูลทั้งหมด', 
-                        'การดำเนินการนี้จะ **ลบรายการธุรกรรมทั้งหมด** ออกจากเครื่องอย่างถาวร! คุณแน่ใจหรือไม่?', 
-                        () => {
+             confirmCustom('ยืนยันการล้างข้อมูลทั้งหมด', 
+                           'การดำเนินการนี้จะ **ลบรายการธุรกรรมทั้งหมด** ออกจากเครื่องอย่างถาวร! คุณแน่ใจหรือไม่?', 
+                           () => {
                 localStorage.removeItem(STORAGE_KEY);
                 transactions = []; 
                 loadTransactions(); 
@@ -595,13 +644,13 @@
                 }
             });
         }
-
+        
         // =======================================================================
-        // AI ANALYSIS FUNCTION (NEW)
+        // AI ANALYSIS FUNCTION (DEEP DIVE LOGIC)
         // =======================================================================
         
         /**
-         * Simulates AI analysis of financial data.
+         * Generates a deep-dive AI analysis of financial data.
          * @param {number} totalIncome
          * @param {number} totalExpense
          * @param {number} netBalance
@@ -611,92 +660,100 @@
         function generateAiAnalysis(totalIncome, totalExpense, netBalance, categoryTotals) {
             if (totalIncome === 0 && totalExpense === 0) {
                 return `
-                    <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                        <span class="text-xl">🤖</span>
+                    <div class="p-4 bg-gray-50 rounded-lg">
                         <p class="text-gray-700 text-sm">
-                            **FinTrack AI:** ขณะนี้ยังไม่มีข้อมูลรายรับและรายจ่ายที่เพียงพอสำหรับการวิเคราะห์เชิงลึก โปรดบันทึกรายการก่อนเริ่มการวิเคราะห์ครับ/ค่ะ
+                            <span class="font-bold text-blue-600">FinTrack AI:</span> ขณะนี้ยังไม่มีข้อมูลรายรับและรายจ่ายที่เพียงพอสำหรับการวิเคราะห์เชิงลึก โปรดบันทึกรายการก่อนเริ่มการวิเคราะห์ครับ/ค่ะ
                         </p>
                     </div>
                 `;
             }
-            
+
             const sortedCategories = Object.entries(categoryTotals).sort(([, a], [, b]) => b - a);
             const hasNegativeBalance = netBalance < 0;
             
             let analysisHtml = '';
+            
+            // --- 1. Overall Financial Health ---
+            const balanceIcon = hasNegativeBalance ? '⚠️' : '✅';
+            
+            let healthMessage;
+            if (hasNegativeBalance) {
+                healthMessage = `สถานะการเงิน **น่าเป็นห่วง** (${formatCurrency(netBalance)} ฿ ติดลบ) แสดงว่ารายจ่ายสูงกว่ารายรับ คุณต้องลดการใช้จ่ายเร่งด่วน`;
+            } else if (totalIncome > 0 && netBalance / totalIncome > 0.3) {
+                healthMessage = `สถานะการเงิน **ยอดเยี่ยม** (${formatCurrency(netBalance)} ฿ คงเหลือ) อัตราส่วนการออม/คงเหลือสูงกว่า 30% ซึ่งเป็นระดับที่มั่นคงมาก`;
+            } else if (totalIncome > 0 && netBalance / totalIncome > 0.1) {
+                healthMessage = `สถานะการเงิน **ดี** (${formatCurrency(netBalance)} ฿ คงเหลือ) คุณมีการจัดการที่ดี แต่มีโอกาสออมได้มากขึ้น`;
+            } else {
+                healthMessage = `สถานะการเงิน **พอใช้** (${formatCurrency(netBalance)} ฿ คงเหลือ) ยอดคงเหลือค่อนข้างน้อยเมื่อเทียบกับรายรับ โปรดเฝ้าระวัง`;
+            }
 
-            // Insight 1: Net Balance Summary
-            const balanceColorClass = hasNegativeBalance ? 'text-red-600 font-bold' : 'text-emerald-600 font-bold';
-            const balanceMessage = hasNegativeBalance 
-                ? `ยอดคงเหลือสุทธิเป็น <span class="${balanceColorClass}">${formatCurrency(netBalance)} ฿ (ติดลบ)</span> ซึ่งเป็นสัญญาณที่ต้องเฝ้าระวัง`
-                : `ยอดคงเหลือสุทธิอยู่ที่ <span class="${balanceColorClass}">${formatCurrency(netBalance)} ฿</span> แสดงว่าคุณมีการจัดการการเงินที่ดีในภาพรวม`;
-                
             analysisHtml += `
-                <div class="space-y-1 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-600">
-                    <p class="text-sm font-semibold text-blue-800">สรุปสถานการณ์ทางการเงินเบื้องต้น:</p>
-                    <p class="text-gray-700 text-sm">${balanceMessage} โดยมีรายรับทั้งหมด ${formatCurrency(totalIncome)} ฿ และรายจ่ายทั้งหมด ${formatCurrency(totalExpense)} ฿</p>
+                <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-600">
+                    <p class="text-sm font-semibold text-blue-800 flex items-center mb-1">${balanceIcon} สรุปภาพรวมการเงิน:</p>
+                    <p class="text-gray-700 text-sm">${healthMessage} (รายรับรวม: ${formatCurrency(totalIncome)} ฿ / รายจ่ายรวม: ${formatCurrency(totalExpense)} ฿)</p>
                 </div>
             `;
 
-            if (sortedCategories.length > 0) {
+            // --- 2. Budget Killer Focus (Top Expense Category) ---
+            if (sortedCategories.length > 0 && totalExpense > 0) {
                 const topCategory = sortedCategories[0];
                 const topCategoryName = topCategory[0];
                 const topCategoryAmount = topCategory[1];
-                const topCategoryPercentage = (totalExpense > 0 ? (topCategoryAmount / totalExpense * 100).toFixed(1) : 0);
+                const topCategoryPercentage = (topCategoryAmount / totalExpense * 100).toFixed(1);
 
-                // Insight 2: Top Expense Category Focus
-                let expenseMessage = `รายจ่ายส่วนใหญ่ของคุณอยู่ในหมวดหมู่ **${topCategoryName}** ซึ่งคิดเป็นสัดส่วนสูงถึง ${topCategoryPercentage}% ของรายจ่ายทั้งหมด`;
-                
-                if (topCategoryPercentage > 40) {
-                    expenseMessage += ' ⚠️ **สูงผิดปกติ** FinTrack AI แนะนำให้ตรวจสอบว่าการใช้จ่ายในหมวดหมู่นี้เกินกว่าแผนที่คุณวางไว้หรือไม่ และพิจารณาหาทางลดหย่อน';
-                } else if (topCategoryPercentage > 20) {
-                    expenseMessage += ' ซึ่งเป็นสัดส่วนสำคัญในการบริหารการเงินของคุณ ควรตั้งงบประมาณสำหรับหมวดหมู่นี้ให้ชัดเจน';
+                let killerAdvice;
+                if (topCategoryPercentage >= 50) {
+                    killerAdvice = `🚩 **(วิกฤต)** หมวดหมู่ **${topCategoryName}** มีสัดส่วนสูงถึง ${topCategoryPercentage}% ของรายจ่ายทั้งหมด นี่คือจุดที่ต้องแก้ไขทันที! FinTrack AI แนะนำให้กำหนดงบประมาณที่เข้มงวดในหมวดนี้`;
+                } else if (topCategoryPercentage >= 30) {
+                    killerAdvice = `🛑 **(เฝ้าระวัง)** หมวดหมู่ **${topCategoryName}** (${topCategoryPercentage}%) เป็นภาระค่าใช้จ่ายหลัก ควรตั้งงบประมาณจำกัดและหาทางลดลงอย่างน้อย 10-15%`;
                 } else {
-                    expenseMessage += ' ซึ่งยังอยู่ในระดับที่สมเหตุสมผล แต่ก็ควรติดตามอย่างใกล้ชิด';
+                    killerAdvice = `💡 **(โอกาสปรับปรุง)** หมวดหมู่ **${topCategoryName}** (${topCategoryPercentage}%) เป็นรายจ่ายสูงสุด คุณอาจเริ่มต้นลดรายจ่ายจากหมวดหมู่นี้ก่อนเป็นอันดับแรก`;
                 }
                 
                 analysisHtml += `
-                    <div class="space-y-1 p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-600">
-                        <p class="text-sm font-semibold text-yellow-800">โฟกัสรายจ่ายหลัก:</p>
-                        <p class="text-gray-700 text-sm">${expenseMessage}</p>
-                    </div>
-                `;
-
-                // Insight 3: Proactive Advice (Budgeting/Saving)
-                const suggestion = netBalance >= 0 
-                    ? `ยอดคงเหลือเป็นบวก FinTrack AI แนะนำให้จัดสรรเงินส่วนนี้เพื่อ **การออมหรือลงทุน** ${Math.max(5, (netBalance / totalIncome * 100).toFixed(0))}% ทันทีที่ได้รับรายรับ`
-                    : `ยอดคงเหลือเป็นลบ FinTrack AI แนะนำให้ **ลดการใช้จ่ายที่ไม่จำเป็น** ในหมวดหมู่หลัก และวางแผนการชำระหนี้เพื่อลดภาระดอกเบี้ย`;
-
-                analysisHtml += `
-                    <div class="space-y-1 p-3 bg-emerald-50 rounded-lg border-l-4 border-emerald-600">
-                        <p class="text-sm font-semibold text-emerald-800">คำแนะนำ FinTrack AI:</p>
-                        <p class="text-gray-700 text-sm">${suggestion}</p>
-                    </div>
-                `;
-
-            } else if (totalIncome > 0 && totalExpense === 0) {
-                analysisHtml += `
-                    <div class="space-y-1 p-3 bg-emerald-50 rounded-lg border-l-4 border-emerald-600">
-                        <p class="text-sm font-semibold text-emerald-800">คำแนะนำ FinTrack AI:</p>
-                        <p class="text-gray-700 text-sm">ยอดคงเหลือเป็นบวกเต็มจำนวน! อย่าลืมบันทึกรายการรายจ่ายเพื่อให้การวิเคราะห์มีความแม่นยำและช่วยให้คุณจัดการเงินได้ดียิ่งขึ้นครับ/ค่ะ</p>
+                    <div class="p-4 bg-yellow-50 rounded-lg border-l-4 border-yellow-600">
+                        <p class="text-sm font-semibold text-yellow-800 mb-1">🔥 จุดที่ต้องควบคุม (Budget Killer):</p>
+                        <p class="text-gray-700 text-sm">${killerAdvice}</p>
                     </div>
                 `;
             }
             
-            // Add a final disclaimer
+            // --- 3. Proactive, Actionable Advice (Savings/Investment Rate) ---
+            const savingsRate = totalIncome > 0 ? ((netBalance / totalIncome) * 100).toFixed(1) : 0;
+            
+            let adviceMessage = '';
+            if (netBalance > 0 && totalIncome > 0) {
+                if (savingsRate >= 20) {
+                     adviceMessage = `📈 **การออม/ลงทุน:** อัตราส่วนการออม/คงเหลือของคุณคือ ${savingsRate}% ซึ่งอยู่ในเกณฑ์ดี แนะนำให้ **โอนเงิน ${formatCurrency(netBalance)} ฿ นี้เข้าบัญชีออม/ลงทุนทันที** เพื่อเพิ่มความมั่งคั่ง`;
+                } else if (savingsRate > 0) {
+                     adviceMessage = `💵 **โอกาสในการออม:** อัตราส่วนการออม/คงเหลือคือ ${savingsRate}% ซึ่งยังน้อยไป FinTrack AI แนะนำให้ตั้งเป้าหมายการออมขั้นต่ำที่ **20%** ของรายรับ โดยลดรายจ่ายในหมวดหมู่หลักลง`;
+                }
+            } else if (hasNegativeBalance) {
+                adviceMessage = `📉 **การจัดการหนี้:** เนื่องจากมียอดติดลบ FinTrack AI แนะนำให้กำหนดแผน **ลดรายจ่าย 10%** ในหมวดหมู่หลัก และนำเงินที่ประหยัดได้ไป **ชำระหนี้** ที่มีดอกเบี้ยสูงที่สุดก่อน`;
+            } else {
+                 adviceMessage = `💡 **คำแนะนำ:** คุณมีรายรับแต่ไม่มีรายจ่าย (หรือในทางกลับกัน) โปรดบันทึกรายการให้ครบถ้วนเพื่อให้ FinTrack AI สามารถให้คำแนะนำการออมและการจัดการหนี้ที่มีความแม่นยำ`;
+            }
+
             analysisHtml += `
-                <div class="mt-4 p-2 text-xs text-gray-500 bg-white rounded-lg border">
-                    *การวิเคราะห์นี้จำลองโดย FinTrack AI และอ้างอิงจากข้อมูลที่บันทึกไว้ใน Local Storage เท่านั้น
+                <div class="p-4 bg-emerald-50 rounded-lg border-l-4 border-emerald-600">
+                    <p class="text-sm font-semibold text-emerald-800 mb-1">🎯 คำแนะนำเชิงรุก FinTrack AI:</p>
+                    <p class="text-gray-700 text-sm">${adviceMessage}</p>
                 </div>
             `;
 
+            // Add a final disclaimer
+            analysisHtml += `
+                <div class="mt-4 p-2 text-xs text-gray-500 bg-white rounded-lg border border-gray-200">
+                    *การวิเคราะห์นี้จำลองโดย FinTrack AI และอ้างอิงจากข้อมูลที่บันทึกไว้ใน Local Storage เท่านั้น
+                </div>
+            `;
 
             return analysisHtml;
         }
 
 
         /**
-         * Calculates and renders the dashboard summary and category analysis.
+         * Calculates and renders the dashboard summary and category analysis. (UPDATED)
          */
         function renderDashboard() {
             let totalIncome = 0;
@@ -723,11 +780,139 @@
             // 2. Render Charts
             renderCharts(categoryTotals, totalExpense);
 
-            // 3. Render AI Analysis (UPDATED: Use AI Analysis)
+            // 3. Render AI Analysis (UPDATED: Use deep analysis)
             const analysisEl = document.getElementById('categoryAnalysis');
             
             // ** Call the new AI Analysis function **
             analysisEl.innerHTML = generateAiAnalysis(totalIncome, totalExpense, netBalance, categoryTotals);
+        }
+
+        // =======================================================================
+        // AI CONSULTATION LOGIC (SIMULATED CHATBOT)
+        // =======================================================================
+        
+        const chatContainer = document.getElementById('chatMessages');
+
+        /**
+         * Renders a message bubble in the chat view.
+         * @param {'user'|'ai'} sender
+         * @param {string} text
+         */
+        function displayMessage(sender, text) {
+            const messageEl = document.createElement('div');
+            messageEl.className = sender === 'user' 
+                ? 'flex justify-end mb-4' 
+                : 'flex justify-start mb-4';
+
+            messageEl.innerHTML = `
+                <div class="${sender === 'user' ? 'bg-blue-500 text-white rounded-bl-xl' : 'bg-gray-200 text-gray-800 rounded-br-xl'} 
+                            max-w-xs lg:max-w-md p-3 rounded-t-xl shadow-md whitespace-pre-wrap">
+                    ${text}
+                </div>
+            `;
+            chatContainer.appendChild(messageEl);
+            // Scroll to the latest message
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        /**
+         * Handles the user's consultation query.
+         */
+        window.handleAiConsultation = function(event) {
+            event.preventDefault();
+            const form = event.target;
+            const queryInput = form.querySelector('#consultationInput');
+            const query = queryInput.value.trim();
+
+            if (!query) return;
+
+            // 1. Display user query
+            displayMessage('user', query);
+            queryInput.value = '';
+
+            // 2. Simulate AI processing time (optional delay for realism)
+            setTimeout(() => {
+                // 3. Generate AI response
+                const response = generateAiResponse(query);
+                
+                // 4. Display AI response
+                displayMessage('ai', response);
+            }, 500);
+        }
+
+        /**
+         * Generates a specialized financial advice response based on the query (simulated AI).
+         * @param {string} query
+         * @returns {string} Financial advice string.
+         */
+        function generateAiResponse(query) {
+            // ใช้ regex เพื่อเก็บแค่ภาษาไทย, ตัวอักษรภาษาอังกฤษ, ตัวเลข, และช่องว่าง (และเอาเครื่องหมายวรรคตอนออก)
+            const normalizedQuery = query.toLowerCase().replace(/[^\u0E00-\u0E7F\w\s]/g, ''); 
+
+            // --- Keywords and Responses based on Financial Best Practices ---
+            if (normalizedQuery.includes('ออม') || normalizedQuery.includes('เก็บเงิน') || normalizedQuery.includes('เงินเก็บ')) {
+                return `
+                    💡 **หลักการออมเงินที่ดี:**
+                    1. **ออมก่อนใช้จ่าย:** ตั้งหักเงินออมอัตโนมัติทันทีที่เงินเดือนเข้า แนะนำให้เริ่มต้นที่ 10-20% ของรายได้
+                    2. **เงินสำรองฉุกเฉิน:** ต้องมีเงินสำรองอย่างน้อย **3-6 เท่า** ของค่าใช้จ่ายรายเดือนเพื่อความมั่นคง
+                    3. **ตั้งเป้าหมาย SMART:** กำหนดเป้าหมายให้ชัดเจน วัดผลได้ และมีกรอบเวลา (เช่น "ออม 50,000 บาท ภายใน 1 ปี เพื่อดาวน์รถ")
+                    4. **ใช้กฎ 50/30/20:** แบ่งรายได้เป็น 50% สำหรับค่าใช้จ่ายจำเป็น, 30% สำหรับค่าใช้จ่ายส่วนตัว, และ 20% สำหรับการออม/ลงทุน
+                `;
+            }
+
+            if (normalizedQuery.includes('ลงทุน') || normalizedQuery.includes('ซื้อหุ้น') || normalizedQuery.includes('ผลตอบแทน')) {
+                return `
+                    📈 **เริ่มต้นเส้นทางการลงทุน:**
+                    1. **รู้จักความเสี่ยง:** ถามตัวเองว่ารับการขาดทุนได้แค่ไหน ถ้าต่ำให้เริ่มที่บัญชีเงินฝากปลอดภาษี หรือกองทุนรวมตลาดเงิน/ตราสารหนี้
+                    2. **ชนะเงินเฟ้อ:** ต้องลงทุนให้ได้ผลตอบแทนมากกว่า 3-5% ต่อปีในระยะยาว เพราะการฝากธนาคารอย่างเดียวเงินอาจด้อยค่าลง
+                    3. **กลยุทธ์ DCA:** สำหรับมือใหม่ ควรใช้วิธีทยอยลงทุนเป็นงวดๆ (**Dollar Cost Average**) อย่างสม่ำเสมอทุกเดือน
+                    4. **เงินเย็นเท่านั้น:** ใช้เงินที่ไม่มีความจำเป็นต้องใช้ใน **3-5 ปีข้างหน้า** ในการลงทุนระยะยาวเท่านั้น
+                `;
+            }
+            
+            if (normalizedQuery.includes('หนี้') || normalizedQuery.includes('บัตรเครดิต') || normalizedQuery.includes('ผ่อน')) {
+                return `
+                    📉 **คำแนะนำด้านการจัดการหนี้:**
+                    1. **ภาระหนี้:** ไม่ควรมีภาระผ่อนหนี้รวมกันเกิน **45%** ของรายได้ต่อเดือน
+                    2. **ลำดับการชำระ:** ให้ความสำคัญกับการปิด **หนี้ดอกเบี้ยสูง** (เช่น หนี้บัตรเครดิต, สินเชื่อส่วนบุคคล) เป็นอันดับแรก
+                    3. **หยุดสร้างหนี้:** หลีกเลี่ยงการก่อหนี้ที่ไม่จำเป็นเพื่อสนอง Need ของตัวเอง และอย่าค้ำประกันให้คนอื่น
+                    4. **เงินกู้นอกระบบ:** ห้ามใช้บริการเงินกู้นอกระบบโดยเด็ดขาด!
+                `;
+            }
+
+            if (normalizedQuery.includes('ลดรายจ่าย') || normalizedQuery.includes('ใช้เงินเยอะ') || normalizedQuery.includes('รูรั่ว') || normalizedQuery.includes('ค่าใช้จ่าย')) {
+                 return `
+                    ✂️ **เทคนิคการลดรายจ่ายอย่างมีประสิทธิภาพ:**
+                    1. **วิเคราะห์ Budget Killer:** เข้าไปที่หน้าแดชบอร์ด แล้วดูว่าหมวดหมู่ใดมีสัดส่วนสูงสุด นั่นคือ "รูรั่ว" ของคุณ
+                    2. **กำหนดงบประมาณ (Budgeting):** ตั้งเพดานการใช้จ่ายสำหรับหมวดหมู่ที่คุณระบุไว้ และพยายามลดลง **10-15%** ในเดือนถัดไป
+                    3. **บันทึกทุกรายการ:** การจดรายรับ-รายจ่ายอย่างละเอียดจะช่วยให้คุณเห็นพฤติกรรมการใช้เงินจริง และปรับพฤติกรรมได้อย่างตรงจุด
+                `;
+            }
+
+            if (normalizedQuery.includes('สวัสดี') || normalizedQuery.includes('หวัดดี')) {
+                 return `
+                    สวัสดีครับ/ค่ะ! FinTrack AI ยินดีให้คำปรึกษาด้านการเงินส่วนบุคคล คุณต้องการคำแนะนำเรื่อง **การออม การลงทุน การจัดการหนี้** หรือ **การลดรายจ่าย** หรือไม่ครับ/คะ?
+                `;
+            }
+            
+            if (normalizedQuery.includes('ขอบคุณ') || normalizedQuery.includes('ดีมาก')) {
+                 return `
+                    ด้วยความยินดีครับ/ค่ะ! หากมีคำถามด้านการเงินเพิ่มเติม ถาม FinTrack AI ได้ตลอดเวลาครับ/ค่ะ
+                `;
+            }
+
+            // Default response
+            return `
+                ขออภัยครับ/ค่ะ FinTrack AI ไม่แน่ใจว่าคุณกำลังต้องการคำปรึกษาเรื่องใด
+                
+                โปรดระบุคำถามที่เกี่ยวข้องกับเรื่องเหล่านี้อย่างชัดเจน:
+                - **ออม/เก็บเงิน**
+                - **ลงทุน/หุ้น**
+                - **หนี้/บัตรเครดิต**
+                - **ลดรายจ่าย**
+                
+                *FinTrack AI เป็นระบบจำลองการให้คำปรึกษาทางการเงินส่วนบุคคล และไม่ใช่การให้คำแนะนำด้านการลงทุนจริง*
+            `;
         }
 
         // =======================================================================
@@ -919,11 +1104,13 @@
         window.switchTab = function(viewId) {
             const views = {
                 dashboard: document.getElementById('dashboardView'),
-                transactions: document.getElementById('transactionsView')
+                transactions: document.getElementById('transactionsView'),
+                consultation: document.getElementById('consultationView')
             };
             const buttons = {
                 dashboard: document.getElementById('tabDashboardBtn'),
-                transactions: document.getElementById('tabTransactionBtn')
+                transactions: document.getElementById('tabTransactionBtn'),
+                consultation: document.getElementById('tabConsultationBtn')
             };
 
             for (const key in views) {
@@ -952,9 +1139,9 @@
             cancelBtn.classList.add('hidden');
 
             if (!onConfirm) {
-                confirmBtn.onclick = () => modal.classList.add('hidden');
+                 confirmBtn.onclick = () => modal.classList.add('hidden');
             } else {
-                confirmBtn.onclick = () => {
+                 confirmBtn.onclick = () => {
                     onConfirm();
                     modal.classList.add('hidden');
                 };
