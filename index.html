@@ -228,7 +228,7 @@
 
     <script type="module">
         // =======================================================================
-        // FIREBASE & UTILITY SETUP
+        // FIREBASE & UTILITY SETUP - สำหรับการซิงค์ข้อมูลเรียลไทม์
         // =======================================================================
 
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
@@ -278,8 +278,9 @@
                     if (user) {
                         userId = user.uid;
                         authReady = true;
+                        // แสดง ID ผู้ใช้ เพื่อยืนยันว่าข้อมูลจะซิงค์กัน (ใช้ ID นี้เป็นตัวผูกข้อมูล)
                         authStatusEl.innerHTML = `สถานะ: <span class="font-medium text-green-600">เชื่อมต่อแล้ว</span> | ID ผู้ใช้: <span class="font-mono text-xs">${userId}</span>`;
-                        // Start listening to transactions once authenticated
+                        // เริ่มต้นการฟังข้อมูล (real-time listener)
                         loadTransactions();
                     } else {
                         // Attempt to sign in with custom token or anonymously
@@ -307,16 +308,18 @@
         function getTransactionCollectionRef() {
             if (!db || !userId) return null;
             // Private data path: /artifacts/{appId}/users/{userId}/financial_transactions
+            // ข้อมูลนี้จะถูกเก็บเป็นส่วนตัวของผู้ใช้แต่ละคนและซิงค์ข้ามอุปกรณ์
             return collection(db, 'artifacts', appId, 'users', userId, 'financial_transactions');
         }
 
         /**
-         * Listens to real-time updates from Firestore.
+         * Listens to real-time updates from Firestore. (ทำให้เกิดการซิงค์ข้อมูล)
          */
         function loadTransactions() {
             const ref = getTransactionCollectionRef();
             if (!ref) return;
 
+            // onSnapshot จะทำให้โค้ดส่วนนี้ทำงานทุกครั้งที่ข้อมูลใน Firestore เปลี่ยนแปลง
             onSnapshot(query(ref), (snapshot) => {
                 const fetchedTransactions = [];
                 snapshot.forEach((doc) => {
@@ -372,6 +375,7 @@
             };
 
             try {
+                // addDoc จะส่งข้อมูลไปยัง Cloud
                 await addDoc(getTransactionCollectionRef(), newTransaction);
                 form.reset();
                 form.date.value = new Date().toISOString().split('T')[0]; // Reset date to today
@@ -391,6 +395,7 @@
             confirmCustom('ยืนยันการลบ', 'คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้อย่างถาวร?', async () => {
                 try {
                     const docRef = doc(getTransactionCollectionRef(), id);
+                    // deleteDoc จะส่งคำสั่งลบไปยัง Cloud
                     await deleteDoc(docRef);
                     console.log("Document successfully deleted!");
                 } catch (e) {
