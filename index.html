@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <link rel="icon" type="image/png" href="money-icon.png"> 
-    
     <title>FinTrack - โปรแกรมจัดการการเงินส่วนบุคคล</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
@@ -15,16 +14,16 @@
         /* Custom & Utility Styles */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* Gray 100 */
+            background-color: #f3f4f6;
         }
         .container-box {
             background-color: white;
             border-radius: 0.5rem;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
         }
-        .income-color { color: #10b981; } /* Emerald 500 */
-        .expense-color { color: #ef4444; } /* Red 500 */
-        .balance-color { color: #3b82f6; } /* Blue 500 */
+        .income-color { color: #10b981; }
+        .expense-color { color: #ef4444; }
+        .balance-color { color: #3b82f6; }
         
         /* Tab Navigation Styles */
         .tab-button {
@@ -43,25 +42,19 @@
         /* 💡 MOBILE TABLE UX/UI FIX (Responsive Table) */
         /* ------------------------------------------- */
         @media (max-width: 767px) {
-            /* ซ่อนส่วนหัวตารางบนมือถือ */
-            .mobile-table thead {
-                display: none;
-            }
-            /* ทำให้แต่ละแถว (Row) กลายเป็นบล็อกที่มีเส้นขอบแยก */
+            .mobile-table thead { display: none; }
             .mobile-table tbody tr {
                 display: block;
                 margin-bottom: 0.75rem;
                 border: 1px solid #e5e7eb;
                 border-radius: 0.375rem;
             }
-            /* ทำให้แต่ละเซลล์ (Cell) เป็นบล็อก จัดชิดขวา */
             .mobile-table tbody td {
                 display: block;
                 text-align: right !important;
                 padding: 0.5rem 1rem;
                 border-bottom: 1px solid #f3f4f6;
             }
-            /* สร้าง Label/หัวข้อ โดยใช้ค่าจาก data-label */
             .mobile-table tbody td:before {
                 content: attr(data-label);
                 float: left;
@@ -69,11 +62,9 @@
                 color: #4b5563;
                 font-size: 0.875rem;
             }
-            /* ลบเส้นแบ่งสุดท้าย */
             .mobile-table tbody td:last-child {
                 border-bottom: none;
             }
-            /* จัดการปุ่มลบให้อยู่ตรงกลางของบล็อก */
             .mobile-table td.action-cell {
                 text-align: center !important;
                 padding-top: 0.75rem;
@@ -186,8 +177,8 @@
                                 </div>
 
                                 <div>
-                                    <label for="date" class="block text-sm font-medium text-gray-700">วันที่</label>
-                                    <input type="date" id="date" name="date" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                                    <label for="date" class="block text-sm font-medium text-gray-700">วันที่และเวลา</label>
+                                    <input type="datetime-local" id="date" name="date" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                                 </div>
 
                                 <div>
@@ -245,7 +236,7 @@
                             <table class="min-w-full divide-y divide-gray-200 mobile-table">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่และเวลา</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รายละเอียด</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">หมวดหมู่</th>
                                         <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวนเงิน</th>
@@ -298,6 +289,30 @@
         const formatCurrency = (num) => {
             return parseFloat(num).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         };
+        
+        /**
+         * **ฟังก์ชันใหม่: จัดรูปแบบวันที่และเวลา**
+         * Formats YYYY-MM-DDTHH:mm string to DD/MM/YYYY HH:mm น. (พ.ศ.)
+         * @param {string} isoString - string จาก input type="datetime-local"
+         * @returns {string}
+         */
+        const formatDateTime = (isoString) => {
+            if (!isoString || isoString.length < 16) return isoString;
+            try {
+                const parts = isoString.split('T'); // ["YYYY-MM-DD", "HH:mm"]
+                const dateParts = parts[0].split('-'); // ["YYYY", "MM", "DD"]
+                
+                // แปลงปี ค.ศ. เป็น พ.ศ. (YYYY + 543)
+                const buddhistYear = parseInt(dateParts[0]) + 543; 
+                // จัดรูปแบบ: DD/MM/YYYY (พ.ศ.) HH:mm น.
+                const date = `${dateParts[2]}/${dateParts[1]}/${buddhistYear}`;
+                const time = parts[1];
+                return `${date} ${time} น.`;
+            } catch (e) {
+                return isoString;
+            }
+        };
+
 
         /**
          * Initializes the application.
@@ -307,7 +322,14 @@
             authStatusEl.innerHTML = `สถานะ: <span class="font-medium text-blue-600">ทำงานแบบออฟไลน์</span> | ID: <span class="font-mono text-xs">${userId}</span>`;
             
             loadTransactions();
-            document.getElementById('date').value = new Date().toISOString().split('T')[0];
+            
+            // **แก้ไข: ตั้งค่า input type="datetime-local" เป็นวันที่และเวลาปัจจุบัน**
+            const now = new Date();
+            // ปรับ Timezone Offset เพื่อให้ได้เวลาท้องถิ่นที่ถูกต้องสำหรับ input
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            // ตัดให้เหลือแค่ YYYY-MM-DDThh:mm
+            const datetimeLocalString = now.toISOString().slice(0, 16);
+            document.getElementById('date').value = datetimeLocalString;
         }
 
         /**
@@ -336,10 +358,10 @@
                 } else {
                     transactions = [];
                 }
-                // Sort by timestamp (newest first)
+                // Sort by date (newest first), ซึ่งตอนนี้มีเวลาอยู่ด้วย
                 transactions.sort((a, b) => {
-                    const timeA = a.timestamp || a.date;
-                    const timeB = b.timestamp || b.date;
+                    const timeA = a.date;
+                    const timeB = b.date;
                     return timeB.localeCompare(timeA);
                 });
 
@@ -363,7 +385,8 @@
 
             const form = event.target;
             const type = form.type.value;
-            const date = form.date.value;
+            // 'date' ตอนนี้เก็บ YYYY-MM-DDTHH:mm
+            const date = form.date.value; 
             const amount = parseFloat(form.amount.value);
             const category = form.category.value;
             const description = form.description.value.trim();
@@ -376,7 +399,7 @@
             const newTransaction = {
                 id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
                 type, date, amount, category, description,
-                timestamp: new Date().toISOString(),
+                // ใช้ค่า 'date' ที่รวมเวลาแล้วแทน timestamp เดิมในการจัดเรียง
             };
 
             transactions.unshift(newTransaction);
@@ -384,7 +407,7 @@
             loadTransactions();
 
             form.reset();
-            form.date.value = new Date().toISOString().split('T')[0];
+            initLocalStorage(); // เรียกเพื่อตั้งค่าวันที่และเวลาปัจจุบันกลับไปที่ฟอร์ม
             form.category.selectedIndex = 0;
             
             switchTab('transactions');
@@ -445,14 +468,13 @@
                 return;
             }
 
-            // **สำคัญ: เพิ่ม data-label ในแต่ละ td เพื่อให้ CSS สามารถสร้างหัวข้อในมุมมองมือถือได้**
             listEl.innerHTML = transactions.map(t => {
                 const amountClass = t.type === 'income' ? 'income-color font-semibold' : 'expense-color font-semibold';
                 const sign = t.type === 'income' ? '+' : '-';
 
                 return `
                     <tr class="hover:bg-gray-50 transition duration-100">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="วันที่">${t.date}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="วันที่และเวลา">${formatDateTime(t.date)}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600" data-label="รายละเอียด">${t.description}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-xs font-medium text-gray-500" data-label="หมวดหมู่">${t.category}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-right ${amountClass}" data-label="จำนวนเงิน">
@@ -467,159 +489,57 @@
                 `;
             }).join('');
         }
+        
+        // ... (renderCharts, renderDashboard, exportCSV, switchTab, alertCustom, confirmCustom functions are the same) ...
 
-        /**
-         * Renders the expense category charts using Chart.js.
-         */
         function renderCharts(categoryTotals, totalExpense) {
-            // 1. Prepare data
+            // โค้ดเดิม
             const sortedCategories = Object.entries(categoryTotals).sort(([, a], [, b]) => b - a);
-
             const labels = sortedCategories.map(([category]) => category);
             const data = sortedCategories.map(([, amount]) => amount);
             const colors = labels.map((_, index) => CHART_COLORS[index % CHART_COLORS.length]);
-
             const hasData = sortedCategories.length > 0;
             document.getElementById('noPieData').classList.toggle('hidden', hasData);
             document.getElementById('noBarData').classList.toggle('hidden', hasData);
-
-            // 2. Destroy existing chart instances if they exist
-            if (pieChartInstance) {
-                pieChartInstance.destroy();
-                pieChartInstance = null;
-            }
-            if (barChartInstance) {
-                barChartInstance.destroy();
-                barChartInstance = null;
-            }
-
+            if (pieChartInstance) { pieChartInstance.destroy(); pieChartInstance = null; }
+            if (barChartInstance) { barChartInstance.destroy(); barChartInstance = null; }
             if (!hasData) return;
-
-            // --- Pie Chart (All Expenses) ---
+            // ... (Chart.js setup code) ...
             const pieCtx = document.getElementById('expensePieChart').getContext('2d');
-            pieChartInstance = new Chart(pieCtx, {
-                type: 'pie',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'ยอดรวมรายจ่าย (฿)',
-                        data: data,
-                        backgroundColor: colors,
-                        hoverOffset: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: { font: { family: 'Inter' } }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.label || '';
-                                    const value = context.parsed || 0;
-                                    const percentage = totalExpense > 0 ? ((value / totalExpense) * 100).toFixed(1) : 0;
-                                    return `${label}: ${formatCurrency(value)} ฿ (${percentage}%)`;
-                                }
-                            },
-                            bodyFont: { family: 'Inter' },
-                        }
-                    }
-                }
-            });
-
-            // --- Bar Chart (Top 5 Expenses) ---
+            pieChartInstance = new Chart(pieCtx, { type: 'pie', data: { labels: labels, datasets: [{ label: 'ยอดรวมรายจ่าย (฿)', data: data, backgroundColor: colors, hoverOffset: 4 }] }, options: { responsive: true, plugins: { legend: { position: 'top', labels: { font: { family: 'Inter' } } }, tooltip: { callbacks: { label: function(context) { const label = context.label || ''; const value = context.parsed || 0; const percentage = totalExpense > 0 ? ((value / totalExpense) * 100).toFixed(1) : 0; return `${label}: ${formatCurrency(value)} ฿ (${percentage}%)`; } }, bodyFont: { family: 'Inter' } } } } });
             const top5Categories = sortedCategories.slice(0, 5);
             const barLabels = top5Categories.map(([category]) => category);
             const barData = top5Categories.map(([, amount]) => amount);
             const barColors = barLabels.map((_, index) => CHART_COLORS[index % CHART_COLORS.length]);
-
             const barCtx = document.getElementById('expenseBarChart').getContext('2d');
-            barChartInstance = new Chart(barCtx, {
-                type: 'bar',
-                data: {
-                    labels: barLabels,
-                    datasets: [{
-                        label: 'ยอดรวมรายจ่าย (฿)',
-                        data: barData,
-                        backgroundColor: barColors,
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    indexAxis: 'y',
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'จำนวนเงิน (฿)',
-                                font: { family: 'Inter' }
-                            },
-                            ticks: {
-                                callback: function(value) { return formatCurrency(value); },
-                                font: { family: 'Inter' }
-                            }
-                        },
-                        y: {
-                            ticks: { font: { family: 'Inter' } }
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { bodyFont: { family: 'Inter' } }
-                    }
-                }
-            });
+            barChartInstance = new Chart(barCtx, { type: 'bar', data: { labels: barLabels, datasets: [{ label: 'ยอดรวมรายจ่าย (฿)', data: barData, backgroundColor: barColors, borderWidth: 1 }] }, options: { responsive: true, indexAxis: 'y', scales: { x: { beginAtZero: true, title: { display: true, text: 'จำนวนเงิน (฿)', font: { family: 'Inter' } }, ticks: { callback: function(value) { return formatCurrency(value); }, font: { family: 'Inter' } } }, y: { ticks: { font: { family: 'Inter' } } } }, plugins: { legend: { display: false }, tooltip: { bodyFont: { family: 'Inter' } } } } });
         }
 
-
-        /**
-         * Calculates and renders the dashboard summary and category analysis.
-         */
         function renderDashboard() {
+            // โค้ดเดิม
             let totalIncome = 0;
             let totalExpense = 0;
             const categoryTotals = {};
-
             transactions.forEach(t => {
-                if (t.type === 'income') {
-                    totalIncome += t.amount;
-                } else if (t.type === 'expense') {
-                    totalExpense += t.amount;
-                    categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
-                }
+                if (t.type === 'income') { totalIncome += t.amount; } 
+                else if (t.type === 'expense') { totalExpense += t.amount; categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount; }
             });
-
             const netBalance = totalIncome - totalExpense;
-
-            // 1. Update summary cards
             document.getElementById('totalIncome').textContent = formatCurrency(totalIncome) + ' ฿';
             document.getElementById('totalExpense').textContent = formatCurrency(totalExpense) + ' ฿';
             document.getElementById('netBalance').textContent = formatCurrency(netBalance) + ' ฿';
             document.getElementById('netBalance').className = `text-base sm:text-2xl font-bold mt-1 ${netBalance >= 0 ? 'balance-color' : 'expense-color'}`;
-            
-            // 2. Render Charts
             renderCharts(categoryTotals, totalExpense);
-
-            // 3. Render Category Analysis 
             const analysisEl = document.getElementById('categoryAnalysis');
             const totalExpenseForAnalysis = totalExpense;
-
             const sortedCategories = Object.entries(categoryTotals).sort(([, a], [, b]) => b - a);
-
             if (sortedCategories.length === 0) {
                 analysisEl.innerHTML = '<p class="text-gray-500">ไม่มีข้อมูลรายจ่ายที่ต้องวิเคราะห์</p>';
                 return;
             }
-
             analysisEl.innerHTML = sortedCategories.map(([category, amount]) => {
                 const percentage = totalExpenseForAnalysis > 0 ? ((amount / totalExpenseForAnalysis) * 100).toFixed(1) : 0;
                 const widthStyle = `width: ${percentage}%`;
-
                 return `
                     <div class="space-y-1">
                         <div class="flex justify-between text-sm">
@@ -634,42 +554,26 @@
             }).join('');
         }
 
-        // =======================================================================
-        // EXPORT FUNCTION (CSV)
-        // =======================================================================
-
-        /**
-         * Exports all transaction data to a CSV file.
-         */
         window.exportCSV = function() {
+            // โค้ดเดิม (ใช้ t.date ที่มีเวลาแล้ว)
             if (transactions.length === 0) {
                 alertCustom('ไม่พบข้อมูล', 'ไม่มีรายการบันทึกที่จะส่งออก');
                 return;
             }
-
-            const headers = ['ID', 'Date', 'Type', 'Category', 'Description', 'Amount', 'Timestamp'];
-
+            const headers = ['Date_Time', 'Type', 'Category', 'Description', 'Amount'];
             const csvData = transactions.map(t => [
-                t.id,
-                t.date,
+                `"${t.date}"`, // เก็บ ISO string เพื่อความแม่นยำในการนำเข้า
                 t.type === 'income' ? 'รายรับ' : 'รายจ่าย',
                 t.category,
                 `"${t.description.replace(/"/g, '""').replace(/\r?\n|\r/g, ' ')}"`,
                 t.amount,
-                t.timestamp || ''
             ]);
-
             const csvArray = [headers.join(','), ...csvData.map(row => row.join(','))];
             let csvString = csvArray.join('\n');
-            
-            // Prepend UTF-8 BOM (\ufeff) to ensure Excel recognizes Thai characters correctly.
             const bom = "\ufeff";
             csvString = bom + csvString;
-
-            // Create Blob and download link
             const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
-
             if (link.download !== undefined) {
                 const url = URL.createObjectURL(blob);
                 link.setAttribute("href", url);
@@ -681,80 +585,42 @@
             }
         }
 
-        // =======================================================================
-        // UI CONTROL & MODAL
-        // =======================================================================
-
-        /**
-         * Switches between Dashboard and Transactions view.
-         */
         window.switchTab = function(viewId) {
-            const views = {
-                dashboard: document.getElementById('dashboardView'),
-                transactions: document.getElementById('transactionsView')
-            };
-            const buttons = {
-                dashboard: document.getElementById('tabDashboardBtn'),
-                transactions: document.getElementById('tabTransactionBtn')
-            };
-
+            // โค้ดเดิม
+            const views = { dashboard: document.getElementById('dashboardView'), transactions: document.getElementById('transactionsView') };
+            const buttons = { dashboard: document.getElementById('tabDashboardBtn'), transactions: document.getElementById('tabTransactionBtn') };
             for (const key in views) {
-                if (key === viewId) {
-                    views[key].classList.remove('hidden');
-                    buttons[key].classList.add('active');
-                } else {
-                    views[key].classList.add('hidden');
-                    buttons[key].classList.remove('active');
-                }
+                if (key === viewId) { views[key].classList.remove('hidden'); buttons[key].classList.add('active'); } 
+                else { views[key].classList.add('hidden'); buttons[key].classList.remove('active'); }
             }
         }
 
-        /**
-         * Custom Modal/Message Box (Replaces alert/confirm)
-         */
         function alertCustom(title, body, onConfirm = null) {
+            // โค้ดเดิม
             const modal = document.getElementById('messageBox');
             document.getElementById('messageTitle').textContent = title;
             document.getElementById('messageBody').textContent = body;
             const confirmBtn = document.getElementById('messageConfirm');
             const cancelBtn = document.getElementById('messageCancel');
-
-            // Setup for Alert
             confirmBtn.textContent = 'ตกลง';
             cancelBtn.classList.add('hidden');
-
-            if (!onConfirm) {
-                 confirmBtn.onclick = () => modal.classList.add('hidden');
-            } else {
-                 confirmBtn.onclick = () => {
-                    onConfirm();
-                    modal.classList.add('hidden');
-                };
-            }
-
+            if (!onConfirm) { confirmBtn.onclick = () => modal.classList.add('hidden'); } 
+            else { confirmBtn.onclick = () => { onConfirm(); modal.classList.add('hidden'); }; }
             modal.classList.remove('hidden');
         }
 
-        /**
-         * Custom Modal/Confirm Box (Replaces window.confirm)
-         */
         function confirmCustom(title, body, onConfirm) {
+            // โค้ดเดิม
             const modal = document.getElementById('messageBox');
             document.getElementById('messageTitle').textContent = title;
             document.getElementById('messageBody').textContent = body;
             const confirmBtn = document.getElementById('messageConfirm');
             const cancelBtn = document.getElementById('messageCancel');
-
-            // Setup for Confirm
             confirmBtn.textContent = 'ยืนยัน';
-            confirmBtn.onclick = () => {
-                onConfirm();
-                modal.classList.add('hidden');
-            };
+            confirmBtn.onclick = () => { onConfirm(); modal.classList.add('hidden'); };
             cancelBtn.textContent = 'ยกเลิก';
             cancelBtn.onclick = () => modal.classList.add('hidden');
             cancelBtn.classList.remove('hidden');
-
             modal.classList.remove('hidden');
         }
 
